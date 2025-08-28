@@ -1,7 +1,7 @@
 export function Testimonials() {
   const testimonials = [
     {
-      content: "ChatFlow has revolutionized how our team communicates. The interface is beautiful and intuitive.",
+      content: "TeamVault has revolutionized how our team communicates. The interface is beautiful and intuitive.",
       author: "Sarah Johnson",
       role: "Product Manager at TechCorp",
       avatar: "SJ"
@@ -28,7 +28,7 @@ export function Testimonials() {
             Loved by teams worldwide
           </h2>
           <p className="text-lg text-secondary">
-            See what our users have to say about ChatFlow
+            See what our users have to say about TeamVault
           </p>
         </div>
 

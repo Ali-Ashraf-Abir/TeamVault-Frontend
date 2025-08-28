@@ -34,7 +34,7 @@ export function Hero() {
             </h1>
             
             <p className="max-w-2xl mx-auto text-lg sm:text-xl text-secondary leading-relaxed">
-              Experience the future of team communication with ChatFlow. 
+              Experience the future of team communication with TeamVault. 
               Beautiful, fast, and built for modern teams who demand excellence.
             </p>
           </div>

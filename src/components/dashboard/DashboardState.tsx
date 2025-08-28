@@ -1,3 +1,8 @@
+'use client'
+
+import { api } from "@/api/api"
+import { useEffect } from "react"
+
 export function DashboardStats() {
   const stats = [
     {
@@ -33,6 +38,15 @@ export function DashboardStats() {
       color: 'bg-orange-500'
     }
   ]
+
+  useEffect(() => {
+    try{
+      const testApi =api.get('/test')
+      console.log(testApi)
+    } catch (error) {
+      console.error(error)
+    }
+  }, [])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

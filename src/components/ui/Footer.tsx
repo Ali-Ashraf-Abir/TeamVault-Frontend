@@ -10,7 +10,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">C</span>
               </div>
-              <span className="text-2xl font-bold gradient-text">ChatFlow</span>
+              <span className="text-2xl font-bold gradient-text">TeamVault</span>
             </div>
             <p className="text-secondary mb-4 max-w-md">
               Modern team communication platform designed for productivity and collaboration.
@@ -53,7 +53,7 @@ export function Footer() {
         
         <div className="border-t border-primary mt-12 pt-8 text-center">
           <p className="text-secondary">
-            © 2024 ChatFlow. All rights reserved.
+            © 2024 TeamVault. All rights reserved.
           </p>
         </div>
       </div>

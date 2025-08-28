@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { api } from '@/api/api'
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -15,44 +16,69 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!')
       setIsLoading(false)
       return
     }
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Redirect to dashboard
-    router.push('/dashboard')
+
+
+    const { confirmPassword, ...formDataWithoutConfirmPassword } = formData;
+   try{
+    const result =await api.post('/auth/register', formDataWithoutConfirmPassword)
+    setIsLoading(false)
+    alert(result.message)
+    localStorage.setItem('accessToken',result.message.accessToken)
+    router.push('/login')
+
+   } catch (error:any) {
+
+    alert(error.data.error.message)
+    setIsLoading(false)
+   }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
+
+    // Password validation regex
+    const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?])(?=\S+$).{8,20}$/;
+
+    if (name === 'password') {
+          console.log(value)
+      // Validate password against regex
+      if (!passwordRegex.test(value)) {
+        setPasswordError('Password must have at least 8 characters, one uppercase letter, one number, and one special character.');
+      } else {
+        setPasswordError('');
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
-    }))
-  }
+    }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-primary mb-2">
+          <label htmlFor="first_name" className="block text-sm font-medium text-primary mb-2">
             First name
           </label>
           <input
-            id="firstName"
-            name="firstName"
+            id="first_name"
+            name="first_name"
             type="text"
             required
-            value={formData.firstName}
+            value={formData.first_name}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-primary rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary placeholder-muted transition-colors"
             placeholder="First name"
@@ -60,15 +86,15 @@ export function RegisterForm() {
         </div>
 
         <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-primary mb-2">
+          <label htmlFor="last_name" className="block text-sm font-medium text-primary mb-2">
             Last name
           </label>
           <input
-            id="lastName"
-            name="lastName"
+            id="last_name"
+            name="last_name"
             type="text"
             required
-            value={formData.lastName}
+            value={formData.last_name}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-primary rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary placeholder-muted transition-colors"
             placeholder="Last name"
@@ -96,17 +122,28 @@ export function RegisterForm() {
         <label htmlFor="password" className="block text-sm font-medium text-primary mb-2">
           Password
         </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          className="w-full px-4 py-3 border border-primary rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary placeholder-muted transition-colors"
-          placeholder="Create a password"
-        />
+        <div className="relative">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'} // Toggle between text and password
+            required
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-primary rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-primary text-primary placeholder-muted transition-colors"
+            placeholder="Create a password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)} // Toggle password visibility
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-600"
+          >
+            {showPassword ? 'Hide' : 'Show'} {/* Toggle text */}
+          </button>
+        </div>
       </div>
+
+      {passwordError && <p className="text-red-500 text-sm mt-2">{passwordError}</p>}
 
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-primary mb-2">
@@ -143,7 +180,7 @@ export function RegisterForm() {
 
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={(isLoading || passwordError) ? true : false}
         className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
       >
         {isLoading ? (

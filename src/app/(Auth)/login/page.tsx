@@ -11,7 +11,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 relative z-10">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-6">
-            <h1 className="text-3xl font-bold gradient-text">ChatFlow</h1>
+            <h1 className="text-3xl font-bold gradient-text">TeamVault</h1>
           </Link>
           <h2 className="text-2xl font-semibold text-primary mb-2">Welcome back</h2>
           <p className="text-secondary">Sign in to your account to continue</p>
