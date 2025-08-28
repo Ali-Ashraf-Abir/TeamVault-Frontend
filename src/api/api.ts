@@ -1,3 +1,5 @@
+import { Router } from "next/router"
+import Cookies from "js-cookie";
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: any
@@ -5,12 +7,12 @@ interface ApiOptions {
   skipAuth?: boolean
 }
 
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('accessToken')
+function getToken(): any {
+  if(Cookies.get('accessToken')) return Cookies.get('accessToken')
+
 }
 
-async function refreshAccessToken(): Promise<string | null> {
+export async function refreshAccessToken(): Promise<string | null> {
   try {
     const response = await api.post('/auth/refresh'); // Call the refresh token endpoint
     if (response.accessToken) {
@@ -38,7 +40,7 @@ export async function apiCall<T = any>(
 
   const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api'
   const url = `${baseURL}${endpoint}`
-
+  
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...headers
@@ -111,6 +113,7 @@ export async function apiCall<T = any>(
 
 
           if (!retryResponse.ok) {
+            
             throw {
               status: retryResponse.status,
               message: retryData?.message || retryResponse.statusText,

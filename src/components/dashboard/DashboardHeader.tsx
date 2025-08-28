@@ -1,11 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { decodeJwt, getUserData } from '@/utils/userHandler'
+import { api } from '@/api/api'
+import { useUser } from '@/context/GlobalContext'
+
+
 
 export function DashboardHeader() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
-
+  const {setUser,user}=useUser()
+  useEffect(()=>{
+    getUserData().then(user => setUser(user))
+    
+  },[])
+  console.log(user)
   return (
     <header className="bg-primary border-b border-primary px-4 lg:px-8 py-4">
       <div className="flex items-center justify-between">
@@ -47,13 +57,13 @@ export function DashboardHeader() {
           <ThemeToggle />
 
           {/* Profile */}
-          <div className="relative">
+          {user?<div className="relative">
             <button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors">
               <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">JD</span>
+                <span className="text-white font-bold text-sm">{user.firstName[0]}{user.lastName[0]}</span>
               </div>
             </button>
-          </div>
+          </div>:''}
         </div>
       </div>
     </header>

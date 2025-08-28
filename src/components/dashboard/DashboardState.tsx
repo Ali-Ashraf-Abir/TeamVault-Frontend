@@ -39,14 +39,7 @@ export function DashboardStats() {
     }
   ]
 
-  useEffect(() => {
-    try{
-      const testApi =api.get('/test')
-      console.log(testApi)
-    } catch (error) {
-      console.error(error)
-    }
-  }, [])
+
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

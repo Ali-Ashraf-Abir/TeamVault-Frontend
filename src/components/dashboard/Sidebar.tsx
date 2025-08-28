@@ -1,5 +1,6 @@
 'use client'
 
+import { useUser } from '@/context/GlobalContext'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
@@ -8,7 +9,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-
+  const {user}=useUser()
   const sidebarItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
     { name: 'Channels', href: '/dashboard/channels', icon: '💬' },
@@ -118,19 +119,21 @@ export function Sidebar() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-primary">
+       {
+        user? <div className="p-4 border-t border-primary">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">JD</span>
+              <span className="text-white font-bold text-sm">{user.firstName[0]}{user.lastName[0]}</span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">John Doe</p>
-                <p className="text-xs text-slate-400 truncate">john@example.com</p>
+                <p className="text-sm font-medium text-white truncate">{user.firstName} {user.lastName}</p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
               </div>
             )}
           </div>
-        </div>
+        </div>:''
+       }
       </div>
     </>
   )

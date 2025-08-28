@@ -6,7 +6,8 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react'
 interface GlobalState {
   user: {
     id: string | null
-    name: string
+    firstName: string
+    lastName: string
     email: string
     avatar?: string | null
   } | null

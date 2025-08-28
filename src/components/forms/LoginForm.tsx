@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/api/api'
-
+import Cookies from "js-cookie";
 export function LoginForm() {
   const [formData, setFormData] = useState({
     email: '',
@@ -21,10 +21,10 @@ export function LoginForm() {
     try {
       const result =await api.post('/auth/login', formData)
       console.log(result)
-      localStorage.setItem('accessToken',result.accessToken)
+      Cookies.set("accessToken", result.accessToken);
       setIsLoading(false)
-      console.log(result)
-      // router.push('/dashboard')
+      
+      router.push('/dashboard')
 
     } catch (error: any) {
       console.error(error)
