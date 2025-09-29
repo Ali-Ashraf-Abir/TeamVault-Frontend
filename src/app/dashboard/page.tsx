@@ -3,13 +3,11 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { TeamOverview } from "@/components/dashboard/TeamOverview";
 
+
 export default function DashboardPage() {
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-primary mb-2">Welcome back, John!</h1>
-        <p className="text-secondary">Here's what's happening with your team today.</p>
-      </div>
       
       <DashboardStats />
       

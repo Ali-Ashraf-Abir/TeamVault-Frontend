@@ -1,6 +1,7 @@
 'use client'
 
 import { api } from "@/api/api"
+import { useUser } from "@/context/GlobalContext"
 import { useEffect } from "react"
 
 export function DashboardStats() {
@@ -39,9 +40,14 @@ export function DashboardStats() {
     }
   ]
 
-
+  const {user}=useUser()
 
   return (
+    <>
+     <div>
+        <h1 className="text-3xl font-bold text-primary mb-2">Welcome back, {user?.firstName}</h1>
+        <p className="text-secondary">Here's what's happening with your team today.</p>
+      </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {stats.map((stat) => (
         <div key={stat.name} className="card p-6 hover:scale-105 transition-transform duration-200">
@@ -63,5 +69,6 @@ export function DashboardStats() {
         </div>
       ))}
     </div>
+    </>
   )
 }

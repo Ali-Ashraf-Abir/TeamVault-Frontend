@@ -5,7 +5,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react'
 // Define the global state structure
 interface GlobalState {
   user: {
-    id: string | null
+    userId: string | null
     firstName: string
     lastName: string
     email: string

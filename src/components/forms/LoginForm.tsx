@@ -12,25 +12,25 @@ export function LoginForm() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-
+  const [error, setError] = useState<string | null>()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
     try {
-      const result =await api.post('/auth/login', formData)
+      const result = await api.post('/auth/login', formData)
       console.log(result)
       Cookies.set("accessToken", result.accessToken);
       setIsLoading(false)
-      
+      setError(null)
       router.push('/dashboard')
 
     } catch (error: any) {
-      console.error(error)
+      console.log(error.data.error.message)
+      setIsLoading(false)
+      setError(error.data.error.message)
 
     }
-
 
   }
 
@@ -92,7 +92,9 @@ export function LoginForm() {
           Forgot password?
         </a>
       </div>
-
+      <div className="text-sm text-red-600 flex justify-center">
+        {error?error:''}
+      </div>
       <button
         type="submit"
         disabled={isLoading}

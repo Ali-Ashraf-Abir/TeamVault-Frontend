@@ -9,10 +9,10 @@ export function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const {user}=useUser()
+  const { user } = useUser()
   const sidebarItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
-    { name: 'Channels', href: '/dashboard/channels', icon: '💬' },
+    { name: 'Servers', href: '/dashboard/servers', icon: '💬' },
     { name: 'Direct Messages', href: '/dashboard/messages', icon: '✉️' },
     { name: 'Team', href: '/dashboard/team', icon: '👥' },
     { name: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
@@ -28,10 +28,10 @@ export function Sidebar() {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById('mobile-sidebar')
       const menuButton = document.getElementById('mobile-menu-button')
-      
-      if (isMobileOpen && sidebar && menuButton && 
-          !sidebar.contains(event.target as Node) && 
-          !menuButton.contains(event.target as Node)) {
+
+      if (isMobileOpen && sidebar && menuButton &&
+        !sidebar.contains(event.target as Node) &&
+        !menuButton.contains(event.target as Node)) {
         setIsMobileOpen(false)
       }
     }
@@ -60,7 +60,7 @@ export function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <div 
+      <div
         id="mobile-sidebar"
         className={`fixed inset-y-0 left-0 z-50 bg-sidebar border-r border-primary transition-all duration-300 
           ${isCollapsed ? 'w-16' : 'w-64'} 
@@ -76,7 +76,7 @@ export function Sidebar() {
               <span className="text-xl font-bold text-inverse">TeamVault</span>
             </Link>
           )}
-          
+
           <div className="flex items-center space-x-2">
             {/* Desktop collapse button */}
             <button
@@ -107,11 +107,10 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                pathname === item.href
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
                   ? 'bg-blue-600 text-white'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
-              }`}
+                }`}
             >
               <span className="text-lg">{item.icon}</span>
               {!isCollapsed && <span>{item.name}</span>}
@@ -119,21 +118,23 @@ export function Sidebar() {
           ))}
         </nav>
 
-       {
-        user? <div className="p-4 border-t border-primary">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">{user.firstName[0]}{user.lastName[0]}</span>
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user.firstName} {user.lastName}</p>
-                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+        {
+          user ? <div className="p-4 border-t border-primary">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {(user?.firstName?.[0] ?? '')}{(user?.lastName?.[0] ?? '')}
+                </span>
               </div>
-            )}
-          </div>
-        </div>:''
-       }
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                </div>
+              )}
+            </div>
+          </div> : ''
+        }
       </div>
     </>
   )

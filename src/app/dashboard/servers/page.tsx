@@ -1,11 +1,21 @@
-export default function ChannelsPage() {
+'use client'
+import { CreateServerModal } from "@/components/forms/CreateServerModal"
+import { useState } from "react"
+
+export default function ServersPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const handleServerCreated = () => setIsModalOpen(false)
   return (
-    <div className="space-y-6">
+    <div className="">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Channels</h1>
-        <button className="btn-primary">Create Channel</button>
+        <h1 className="text-2xl font-bold text-primary">Servers</h1>
+        <button  onClick={() => setIsModalOpen(true)}className="btn-primary mb-6">Create Server</button>
       </div>
-      
+       <CreateServerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onServerCreated={handleServerCreated}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="card p-6">
