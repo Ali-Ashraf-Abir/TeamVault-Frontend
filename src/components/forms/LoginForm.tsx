@@ -19,7 +19,6 @@ export function LoginForm() {
 
     try {
       const result = await api.post('/auth/login', formData)
-      console.log(result)
       Cookies.set("accessToken", result.accessToken);
       setIsLoading(false)
       setError(null)

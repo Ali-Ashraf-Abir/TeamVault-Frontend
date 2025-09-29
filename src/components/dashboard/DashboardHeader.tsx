@@ -15,7 +15,6 @@ export function DashboardHeader() {
     getUserData().then(user => setUser(user))
 
   }, [])
-  console.log(user)
   return (
     <header className="bg-primary border-b border-primary px-4 lg:px-8 py-4">
       <div className="flex items-center justify-between">

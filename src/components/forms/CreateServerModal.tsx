@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { api } from '@/api/api' // your API utils
-import { useUser } from '@/context/GlobalContext'
+import { useGlobal, useUser } from '@/context/GlobalContext'
 
 interface CreateServerModalProps {
   isOpen: boolean
@@ -16,13 +16,12 @@ export function CreateServerModal({ isOpen, onClose, onServerCreated }: CreateSe
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { user } = useUser() 
-
+  const {setData} = useGlobal()
   const handleCreateServer = async () => {
     if (!name) {
       setError('Server name is required')
       return
     }
-    console.log(user?.userId)
     setLoading(true)
     setError('')
     try {
@@ -30,6 +29,7 @@ export function CreateServerModal({ isOpen, onClose, onServerCreated }: CreateSe
       setName('')
       setDescription('')
       onServerCreated()
+      setData('loadServer',true)
       onClose()
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to create server')

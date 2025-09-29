@@ -62,12 +62,13 @@ export function Sidebar() {
       {/* Sidebar */}
       <div
         id="mobile-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 bg-sidebar border-r border-primary transition-all duration-300 
-          ${isCollapsed ? 'w-16' : 'w-64'} 
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
-          lg:translate-x-0 lg:relative lg:block flex flex-col`}
+        className={`fixed inset-y-0 left-0 z-50 bg-sidebar border-r border-primary transition-all duration-300
+    ${isCollapsed ? 'w-16' : 'w-64'} 
+    ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+    lg:translate-x-0 lg:relative lg:block flex flex-col min-h-screen`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-primary">
+        {/* Header */}
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 border-b border-primary flex-shrink-0`}>
           {!isCollapsed && (
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -76,9 +77,8 @@ export function Sidebar() {
               <span className="text-xl font-bold text-inverse">TeamVault</span>
             </Link>
           )}
-
+          {/* Collapse / Close buttons */}
           <div className="flex items-center space-x-2">
-            {/* Desktop collapse button */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="hidden lg:block p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"
@@ -88,8 +88,6 @@ export function Sidebar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
               </svg>
             </button>
-
-            {/* Mobile close button */}
             <button
               onClick={() => setIsMobileOpen(false)}
               className="lg:hidden p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white"
@@ -102,26 +100,31 @@ export function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {/* Navigation (scrollable) */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
           {sidebarItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${pathname === item.href
+              className={`flex items-center rounded-lg text-sm font-medium transition-colors
+                ${isCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 space-x-3'}
+                ${pathname === item.href
                   ? 'bg-blue-600 text-white'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700'
                 }`}
+              title={isCollapsed ? item.name : undefined}
             >
-              <span className="text-lg">{item.icon}</span>
+              <span className="text-lg flex-shrink-0">{item.icon}</span>
               {!isCollapsed && <span>{item.name}</span>}
             </Link>
           ))}
         </nav>
 
-        {
-          user ? <div className="p-4 border-t border-primary">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+        {/* User info (always at bottom) */}
+        {user && (
+          <div className={`flex-shrink-0 p-4 border-t border-primary ${isCollapsed ? 'px-2' : ''}`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+              <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-sm">
                   {(user?.firstName?.[0] ?? '')}{(user?.lastName?.[0] ?? '')}
                 </span>
@@ -133,9 +136,10 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-          </div> : ''
-        }
+          </div>
+        )}
       </div>
+
     </>
   )
 }

@@ -51,7 +51,6 @@ export function RegisterForm() {
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>?])(?=\S+$).{8,20}$/;
 
     if (name === 'password') {
-          console.log(value)
       // Validate password against regex
       if (!passwordRegex.test(value)) {
         setPasswordError('Password must have at least 8 characters, one uppercase letter, one number, and one special character.');
