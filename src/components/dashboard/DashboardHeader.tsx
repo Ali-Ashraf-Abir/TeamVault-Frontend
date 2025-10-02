@@ -1,11 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { decodeJwt, getUserData } from '@/utils/userHandler'
 import { api } from '@/api/api'
 import { useUser } from '@/context/GlobalContext'
+import Cookies from "js-cookie";
+import { LogOut } from "lucide-react";
 
+interface User {
+  firstName?: string;
+  lastName?: string;
+}
+
+interface Props {
+  user?: User;
+  onLogout?: () => void; // optional callback after logout
+}
 
 
 export function DashboardHeader() {
@@ -15,6 +26,41 @@ export function DashboardHeader() {
     getUserData().then(user => setUser(user))
 
   }, [])
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    // Remove tokens
+    const token = Cookies.get("accessToken")
+    const logout = await api.post('/auth/logout', { token: token })
+    if (logout.res) {
+      Cookies.remove("accessToken");
+      Cookies.remove("refreshToken");
+      localStorage.removeItem("userData")
+    }
+    else {
+      Cookies.remove("accessToken");
+      Cookies.remove("refreshToken");
+      localStorage.removeItem("userData")
+    }
+
+    // Reload page or redirect to login
+    window.location.href = "/login";
+  };
+
+  if (!user) return null;
+
   return (
     <header className="bg-primary border-b border-primary px-4 lg:px-8 py-4">
       <div className="flex items-center justify-between">
@@ -56,14 +102,30 @@ export function DashboardHeader() {
           <ThemeToggle />
 
           {/* Profile */}
-          {user ? <div className="relative">
-            <button className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors">
+          {user ? <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent transition-colors"
+            >
               <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm">
-                  {(user?.firstName?.[0] ?? '')}{(user?.lastName?.[0] ?? '')}
+                  {(user.firstName?.[0] ?? "")}
+                  {(user.lastName?.[0] ?? "")}
                 </span>
               </div>
             </button>
+
+            {/* Dropdown */}
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-bg-primary border border-border-accent rounded shadow-lg z-20">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-secondary hover:bg-accent transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              </div>
+            )}
           </div> : ''}
         </div>
       </div>

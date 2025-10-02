@@ -2,7 +2,8 @@
 
 import { api } from "@/api/api"
 import { useUser } from "@/context/GlobalContext"
-import { useEffect } from "react"
+import { getUserData } from "@/utils/userHandler"
+import { useEffect, useState } from "react"
 
 export function DashboardStats() {
   const stats = [
@@ -40,35 +41,42 @@ export function DashboardStats() {
     }
   ]
 
-  const {user}=useUser()
+  const [user, setUser] = useState<any | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const data = await getUserData();
+      setUser(data);
+    }
+    fetchUser();
+  }, []);
 
   return (
     <>
-     <div>
+      <div>
         <h1 className="text-3xl font-bold text-primary mb-2">Welcome back, {user?.firstName}</h1>
         <p className="text-secondary">Here's what's happening with your team today.</p>
       </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat) => (
-        <div key={stat.name} className="card p-6 hover:scale-105 transition-transform duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-3 ${stat.color} rounded-lg`}>
-              <span className="text-2xl">{stat.icon}</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <div key={stat.name} className="card p-6 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 ${stat.color} rounded-lg`}>
+                <span className="text-2xl">{stat.icon}</span>
+              </div>
+              <span className={`text-sm font-medium ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                {stat.change}
+              </span>
             </div>
-            <span className={`text-sm font-medium ${
-              stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {stat.change}
-            </span>
+
+            <div>
+              <p className="text-2xl font-bold text-primary mb-1">{stat.value}</p>
+              <p className="text-sm text-secondary">{stat.name}</p>
+            </div>
           </div>
-          
-          <div>
-            <p className="text-2xl font-bold text-primary mb-1">{stat.value}</p>
-            <p className="text-sm text-secondary">{stat.name}</p>
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
     </>
   )
 }
