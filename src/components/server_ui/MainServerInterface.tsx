@@ -9,6 +9,7 @@ import ServerInviteCards from './ServerInviteCards';
 import { api } from '@/api/api';
 import CreateLobbyModal, { LobbyDropdown } from './CreateLobbyModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
+import { AddMembersModal } from './AddMembersModal';
 type ServerRole = 'owner' | 'admin' | 'member' | 'guest';
 type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
 interface User {
@@ -89,6 +90,7 @@ const MainServerInterface: React.FC = () => {
     const [showCreateLobbyModal, setShowCreateLobbyModal] = useState(false);
     const [lobbies, setLobbies] = useState<any>()
     const [lobbyData, setLobbyData] = useState<any>()
+    const [isOpen, setOpen] = useState(false);
     const [selectedLobbyName, setSelectedLobbyName] = useState<string>('')
     // get the user data from the local storage
     useEffect(() => {
@@ -122,7 +124,7 @@ const MainServerInterface: React.FC = () => {
         if (selectedLobby != '') {
             fetchLobbyData()
         }
-    }, [selectedLobby])
+    }, [selectedLobby,loadLobby])
     useEffect(() => {
         const fetchLobbies = () => {
             api.get(`/getServerLobbiesByServerId/${serverId}`).then(data => setLobbies(data.lobbies))
@@ -147,18 +149,18 @@ const MainServerInterface: React.FC = () => {
         }
     };
 
-    const handleAddMembersToLobby = (lobbyId: string, lobbyName: string) => {
-        // Open modal or navigate to add members screen
-        console.log('Add members to lobby:', lobbyId, lobbyName);
-        // You can implement a separate modal for this
-    };
+    // const handleAddMembersToLobby = (lobbyId: string, lobbyName: string) => {
+    //     // Open modal or navigate to add members screen
+    //     console.log('Add members to lobby:', lobbyId, lobbyName);
+    //     // You can implement a separate modal for this
+    // };
 
     const handleDeleteLobby = async (lobbyId: string) => {
         try {
             const result = await api.delete(`/deleteLobbyByLobbyId/${lobbyId}`)
             if (result.ok) {
                 alert('lobby deleted successfully')
-                setData('loadLobby',true)
+                setData('loadLobby', true)
                 setConfirmModalOpen(false)
             }
             else {
@@ -168,6 +170,25 @@ const MainServerInterface: React.FC = () => {
             console.log(err.message)
         }
     };
+
+    const handleAddingMembersToLobby =async (data: { userIds: string[]; role: string }) => {
+        console.log("Selected users and role:", data);
+        try{
+            const result = await api.post(`/addMultipleLobbyMembers/${selectedLobby}/members`,data)
+            if(result.ok){
+                alert('members are addeed')
+                setOpen(false)
+                setData('loadLobby',true)
+            }
+        }catch(err:any){
+            console.log(err.message)
+        }
+
+        
+    };
+
+
+
     // server api
     useEffect(() => {
         if (serverId) {
@@ -186,6 +207,13 @@ const MainServerInterface: React.FC = () => {
     const lobbyMembers: ServerMembership[] = lobbyData?.members
 
     // Mock chats
+
+    const mockUsers = [
+        { userId: "1", firstName: "Alice", lastName: "Smith", email: "alice@example.com" },
+        { userId: "2", firstName: "Bob", lastName: "Johnson", email: "bob@example.com" },
+        { userId: "3", firstName: "Charlie", lastName: "Lee", email: "charlie@example.com" },
+    ];
+
     const chats: Chat[] = [
         {
             chatId: 'chat-1',
@@ -482,6 +510,14 @@ const MainServerInterface: React.FC = () => {
                 onCancel={() => setConfirmModalOpen(false)}
             />
 
+            <AddMembersModal
+                isOpen={isOpen}
+                users={serverData?.members}
+                existingMemberIds={lobbyData?.members} // Alice is already a member
+                onAdd={handleAddingMembersToLobby}
+                onCancel={() => setOpen(false)}
+            />
+
             {/* Channel Sidebar */}
             <div className="w-60 bg-sidebar flex flex-col border-r border-primary">
                 {/* Server Header */}
@@ -551,7 +587,7 @@ const MainServerInterface: React.FC = () => {
                             <div key={lobby.lobbyId} className="relative group">
                                 <div
                                     onClick={() => { setSelectedLobby(lobby.lobbyId); setActiveView('chat'); setSelectedLobbyName(lobby.lobbyName) }}
-                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded mb-0.5 transition-colors ${selectedLobby === lobby.lobbyId && activeView === 'chat'
+                                    className={`w-full cursor-pointer flex items-center gap-2 px-2 py-1.5 rounded mb-0.5 transition-colors ${selectedLobby === lobby.lobbyId && activeView === 'chat'
                                         ? 'bg-secondary/40 text-white'
                                         : 'text-gray-300 hover:bg-secondary/20 hover:text-white'
                                         }`}
@@ -565,7 +601,7 @@ const MainServerInterface: React.FC = () => {
                                     <LobbyDropdown
                                         lobbyId={lobby.lobbyId}
                                         lobbyName={lobby.lobbyName}
-                                        onAddMembers={() => handleAddMembersToLobby(lobby.lobbyId, lobby.lobbyName)}
+                                        onAddMembers={() => { setOpen(true), setSelectedLobby(lobby.lobbyId) }}
                                         onDelete={() => { setConfirmModalOpen(true), setSelectedLobby(lobby.lobbyId) }}
                                     />
                                 </div>
