@@ -7,10 +7,10 @@ import { useGlobal, useUser } from '@/context/GlobalContext';
 import { getUserData } from '@/utils/userHandler';
 import ServerInviteCards from './ServerInviteCards';
 import { api } from '@/api/api';
-// Types matching your Prisma schema
+import CreateLobbyModal, { LobbyDropdown } from './CreateLobbyModal';
+import { ConfirmModal } from '../modals/ConfirmModal';
 type ServerRole = 'owner' | 'admin' | 'member' | 'guest';
 type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
-
 interface User {
     userId: string;
     firstName: string;
@@ -76,75 +76,114 @@ interface UserInvite {
 
 const MainServerInterface: React.FC = () => {
     const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files'>('chat');
-    const [selectedLobby, setSelectedLobby] = useState<string>('lobby-1');
+    const [selectedLobby, setSelectedLobby] = useState<string>('');
     const [message, setMessage] = useState('');
     const [showMembers, setShowMembers] = useState(true);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
     const params = useParams()
     const serverId = params.server_id as string
-
-    // Mock current user
-    const currentUser: User = {
-        userId: 'user-1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
-    };
     const { setUser, user } = useUser()
+    const currentUser = user
+    const [serverData, setServerData] = useState<any>()
+    const [showCreateLobbyModal, setShowCreateLobbyModal] = useState(false);
+    const [lobbies, setLobbies] = useState<any>()
+    const [lobbyData, setLobbyData] = useState<any>()
+    const [selectedLobbyName, setSelectedLobbyName] = useState<string>('')
+    // get the user data from the local storage
     useEffect(() => {
         getUserData().then(user => setUser(user))
-
     }, [])
-    const {getData,setData}=useGlobal()
-    const [serverInvites,setServerInviteData]=useState<any>()
-    // Mock server data
-    const currentServer: Server = {
-        serverId: 'server-1',
-        serverName: 'Development Team',
-        description: 'Team collaboration workspace',
-        createdBy: 'user-1',
-        createdAt: new Date('2025-01-01'),
+    // global states
+    const { getData, setData } = useGlobal()
+    // invite apis
+    const [serverInvites, setServerInviteData] = useState<any>()
+    const loadLobby = getData('loadLobby')
+    const onRevoke = async (inviteId: string) => {
+        const revoke = await api.post(`/invite/revokeInvite/${inviteId}`)
+        if (revoke.ok) {
+            setData('loadInvite', true)
+        }
+    }
+    useEffect(() => {
+        const serverInviteData = api.get(`/server/${serverId}/invites`).then(data => setServerInviteData(data))
+        setData('loadInvite', false)
+    }, [getData('loadInvite')])
+
+
+    // lobby apis and getting some server data
+
+    useEffect(() => {
+
+        const fetchLobbyData = () => {
+            api.get(`/getLobbyByLobbyId/${selectedLobby}`).then(data => setLobbyData(data))
+        }
+
+        if (selectedLobby != '') {
+            fetchLobbyData()
+        }
+    }, [selectedLobby])
+    useEffect(() => {
+        const fetchLobbies = () => {
+            api.get(`/getServerLobbiesByServerId/${serverId}`).then(data => setLobbies(data.lobbies))
+        }
+        if (serverId) {
+            fetchLobbies()
+            setData('loadLobby', false)
+        }
+    }, [loadLobby])
+    const handleCreateLobby = async (lobbyData: { lobbyName: string; isPrivate: boolean, serverId: string, creatorId: string | null | undefined }) => {
+        try {
+            const response = await api.post(`/createLobby`, lobbyData);
+            if (response.ok) {
+                alert('lobby created')
+                setData('loadLobby', true)
+                setShowCreateLobbyModal(false);
+
+
+            }
+        } catch (error) {
+            console.error('Failed to create lobby:', error);
+        }
     };
 
-    // Mock lobbies (channels)
-    const lobbies: Lobby[] = [
-        { lobbyId: 'lobby-1', serverId: 'server-1', lobbyName: 'general', createdAt: new Date(), isPrivate: false },
-        { lobbyId: 'lobby-2', serverId: 'server-1', lobbyName: 'random', createdAt: new Date(), isPrivate: false },
-        { lobbyId: 'lobby-3', serverId: 'server-1', lobbyName: 'announcements', createdAt: new Date(), isPrivate: false },
-        { lobbyId: 'lobby-4', serverId: 'server-1', lobbyName: 'private-team', createdAt: new Date(), isPrivate: true },
-    ];
+    const handleAddMembersToLobby = (lobbyId: string, lobbyName: string) => {
+        // Open modal or navigate to add members screen
+        console.log('Add members to lobby:', lobbyId, lobbyName);
+        // You can implement a separate modal for this
+    };
 
-    // Mock server members
-    const serverMembers: ServerMembership[] = [
-        {
-            serverId: 'server-1',
-            userId: 'user-1',
-            role: 'owner',
-            joinedAt: new Date('2025-01-01'),
-            user: { userId: 'user-1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-        },
-        {
-            serverId: 'server-1',
-            userId: 'user-2',
-            role: 'admin',
-            joinedAt: new Date('2025-01-02'),
-            user: { userId: 'user-2', firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' },
-        },
-        {
-            serverId: 'server-1',
-            userId: 'user-3',
-            role: 'member',
-            joinedAt: new Date('2025-01-05'),
-            user: { userId: 'user-3', firstName: 'Mike', lastName: 'Johnson', email: 'mike@example.com' },
-        },
-        {
-            serverId: 'server-1',
-            userId: 'user-4',
-            role: 'member',
-            joinedAt: new Date('2025-01-10'),
-            user: { userId: 'user-4', firstName: 'Sarah', lastName: 'Williams', email: 'sarah@example.com' },
-        },
-    ];
+    const handleDeleteLobby = async (lobbyId: string) => {
+        try {
+            const result = await api.delete(`/deleteLobbyByLobbyId/${lobbyId}`)
+            if (result.ok) {
+                alert('lobby deleted successfully')
+                setData('loadLobby',true)
+                setConfirmModalOpen(false)
+            }
+            else {
+                alert(result.message)
+            }
+        } catch (err: any) {
+            console.log(err.message)
+        }
+    };
+    // server api
+    useEffect(() => {
+        if (serverId) {
+            api.get(`/getServerByServerId/${serverId}`).then(data => setServerData(data.data))
+        }
+    }, [serverId])
+
+    useEffect(() => {
+        if (selectedLobby == '') {
+            setLobbyData(serverData)
+
+        }
+    }, [selectedLobby, serverData])
+
+    const currentServer: Server = serverData
+    const lobbyMembers: ServerMembership[] = lobbyData?.members
 
     // Mock chats
     const chats: Chat[] = [
@@ -177,11 +216,8 @@ const MainServerInterface: React.FC = () => {
         },
     ];
 
- 
-    useEffect(()=>{
-        const serverInviteData=api.get(`/server/${serverId}/invites`).then(data=>setServerInviteData(data))
-        setData('loadInvite',false)
-    },[getData('loadInvite')])
+
+
     // Mock user invites (pending invitations)
     const userInvites: UserInvite[] = [
         {
@@ -237,11 +273,13 @@ const MainServerInterface: React.FC = () => {
 
 
     const renderChat = () => {
-        const currentLobby = lobbies.find(l => l.lobbyId === selectedLobby);
+        const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
         const lobbyChats = chats.filter(c => c.lobbyId === selectedLobby);
 
         return (
             <>
+
+
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {lobbyChats.length === 0 ? (
@@ -334,8 +372,8 @@ const MainServerInterface: React.FC = () => {
                         Invite Links
                     </h3>
                     <div className="space-y-3">
-                        {serverInvites.map((invite:any) => (
-                            <ServerInviteCards key={invite.inviteId} invite={invite}>
+                        {serverInvites.map((invite: any) => (
+                            <ServerInviteCards key={invite.inviteId} invite={invite} onRevoke={onRevoke}>
 
                             </ServerInviteCards>
                         ))}
@@ -422,15 +460,33 @@ const MainServerInterface: React.FC = () => {
         </div>
     );
 
-    const currentLobby = lobbies.find(l => l.lobbyId === selectedLobby);
+    const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
 
     return (
         <div className="flex h-screen bg-primary text-primary">
+            {showCreateLobbyModal && (
+                <CreateLobbyModal
+                    creatorId={user?.userId}
+                    serverId={serverId}
+                    onClose={() => setShowCreateLobbyModal(false)}
+                    onCreateLobby={handleCreateLobby}
+                />
+            )}
+            <ConfirmModal
+                isOpen={isConfirmModalOpen}
+                title="Delete Item"
+                message="Are you sure you want to delete this item? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={() => handleDeleteLobby(selectedLobby)}
+                onCancel={() => setConfirmModalOpen(false)}
+            />
+
             {/* Channel Sidebar */}
             <div className="w-60 bg-sidebar flex flex-col border-r border-primary">
                 {/* Server Header */}
                 <div className="h-14 flex items-center justify-between px-4 border-b border-primary/50 shadow-sm">
-                    <h2 className="font-bold text-white text-lg truncate">{currentServer.serverName}</h2>
+                    <h2 className="font-bold text-white text-lg truncate">{currentServer?.serverName}</h2>
                     <button className="p-1 hover:bg-secondary/30 rounded transition-colors">
                         <ChevronDown className="w-5 h-5 text-white" />
                     </button>
@@ -487,26 +543,33 @@ const MainServerInterface: React.FC = () => {
                     <div className="mb-4">
                         <div className="flex items-center justify-between px-2 py-1 mb-1">
                             <span className="text-xs font-semibold text-gray-400 uppercase">Lobbies</span>
-                            <button className="p-1 hover:bg-secondary/30 rounded">
+                            <button onClick={() => setShowCreateLobbyModal(true)} className="p-1 hover:bg-secondary/30 rounded">
                                 <Plus className="w-4 h-4 text-gray-400" />
                             </button>
                         </div>
-                        {lobbies.map((lobby) => (
-                            <button
-                                key={lobby.lobbyId}
-                                onClick={() => { setSelectedLobby(lobby.lobbyId); setActiveView('chat'); }}
-                                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded mb-0.5 transition-colors ${selectedLobby === lobby.lobbyId && activeView === 'chat'
-                                    ? 'bg-secondary/40 text-white'
-                                    : 'text-gray-300 hover:bg-secondary/20 hover:text-white'
-                                    }`}
-                            >
-                                {lobby.isPrivate ? (
-                                    <Lock className="w-4 h-4 flex-shrink-0" />
-                                ) : (
-                                    <Hash className="w-4 h-4 flex-shrink-0" />
-                                )}
-                                <span className="text-sm truncate">{lobby.lobbyName}</span>
-                            </button>
+                        {lobbies?.map((lobby: any) => (
+                            <div key={lobby.lobbyId} className="relative group">
+                                <div
+                                    onClick={() => { setSelectedLobby(lobby.lobbyId); setActiveView('chat'); setSelectedLobbyName(lobby.lobbyName) }}
+                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded mb-0.5 transition-colors ${selectedLobby === lobby.lobbyId && activeView === 'chat'
+                                        ? 'bg-secondary/40 text-white'
+                                        : 'text-gray-300 hover:bg-secondary/20 hover:text-white'
+                                        }`}
+                                >
+                                    {lobby.isPrivate ? (
+                                        <Lock className="w-4 h-4 flex-shrink-0" />
+                                    ) : (
+                                        <Hash className="w-4 h-4 flex-shrink-0" />
+                                    )}
+                                    <span className="text-sm truncate flex-1 text-left">{lobby.lobbyName}</span>
+                                    <LobbyDropdown
+                                        lobbyId={lobby.lobbyId}
+                                        lobbyName={lobby.lobbyName}
+                                        onAddMembers={() => handleAddMembersToLobby(lobby.lobbyId, lobby.lobbyName)}
+                                        onDelete={() => { setConfirmModalOpen(true), setSelectedLobby(lobby.lobbyId) }}
+                                    />
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -515,13 +578,13 @@ const MainServerInterface: React.FC = () => {
                 <div className="h-14 flex items-center gap-2 px-2 bg-secondary/20 border-t border-primary/50">
                     <div className="relative">
                         <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-semibold">
-                            {getInitials(currentUser.firstName, currentUser.lastName)}
+                            {currentUser && getInitials(currentUser?.firstName, currentUser?.lastName)}
                         </div>
                         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-sidebar"></div>
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold text-white truncate">
-                            {currentUser.firstName} {currentUser.lastName}
+                            {currentUser?.firstName} {currentUser?.lastName}
                         </div>
                         <div className="text-xs text-gray-400 truncate">Online</div>
                     </div>
@@ -553,7 +616,7 @@ const MainServerInterface: React.FC = () => {
                             </h1>
                             {activeView === 'chat' && (
                                 <p className="text-xs text-muted">
-                                    {serverMembers.length} members
+                                    {lobbyMembers?.length} members
                                 </p>
                             )}
                         </div>
@@ -588,20 +651,21 @@ const MainServerInterface: React.FC = () => {
             {showMembers && activeView === 'chat' && (
                 <div className="w-60 bg-secondary border-l border-primary flex flex-col">
                     <div className="p-4 border-b border-primary">
-                        <h3 className="font-semibold text-primary">Members — {serverMembers.length}</h3>
+                        <h3 className="font-semibold text-primary">{selectedLobby == '' ? 'Server' : selectedLobbyName} </h3>
+                        <h3 className="font-semibold text-primary">Members — {lobbyMembers?.length} </h3>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
                         {['owner', 'admin', 'member', 'guest'].map((roleFilter) => {
-                            const roleMembers = serverMembers.filter(m => m.role === roleFilter);
+                            const roleMembers = lobbyMembers?.filter(m => m.role === roleFilter);
 
-                            if (roleMembers.length === 0) return null;
+                            if (roleMembers?.length === 0) return null;
 
                             return (
                                 <div key={roleFilter} className="mb-4">
                                     <div className="px-2 py-1 text-xs font-semibold text-muted uppercase mb-1">
-                                        {roleFilter} — {roleMembers.length}
+                                        {roleFilter} — {roleMembers?.length}
                                     </div>
-                                    {roleMembers.map((member) => (
+                                    {roleMembers?.map((member) => (
                                         <button
                                             key={member.userId}
                                             className="w-full flex items-center gap-3 px-2 py-1.5 rounded hover:bg-accent transition-colors group"

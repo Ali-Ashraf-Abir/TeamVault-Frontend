@@ -43,6 +43,10 @@ export default function InvitePage({ params }: { params: { code: string } }) {
         if (user) {
             redeemInvite()
         }
+        else{
+            setStatus('error')
+            setMessage("Log in with your account first to accept invite!")
+        }
     }, [code, router, user])
 
     return (
