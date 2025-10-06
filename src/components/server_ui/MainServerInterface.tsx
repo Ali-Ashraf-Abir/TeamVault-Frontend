@@ -10,7 +10,12 @@ import { api } from '@/api/api';
 import CreateLobbyModal, { LobbyDropdown } from './CreateLobbyModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
 import { AddMembersModal } from './AddMembersModal';
-type ServerRole = 'owner' | 'admin' | 'member' | 'guest';
+import MessageArea from './MessageArea';
+import MessageInputArea from './MessageInputArea';
+import ServerSideBar from './ServerSideBar';
+import ChannelHeader from './ChannelHeader';
+import MembersSidebar from './MembersSidebar';
+export type ServerRole = 'owner' | 'admin' | 'member' | 'guest';
 type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
 interface User {
     userId: string;
@@ -78,7 +83,7 @@ interface UserInvite {
 const MainServerInterface: React.FC = () => {
     const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files'>('chat');
     const [selectedLobby, setSelectedLobby] = useState<string>('');
-    const [message, setMessage] = useState('');
+
     const [showMembers, setShowMembers] = useState(true);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -124,7 +129,7 @@ const MainServerInterface: React.FC = () => {
         if (selectedLobby != '') {
             fetchLobbyData()
         }
-    }, [selectedLobby,loadLobby])
+    }, [selectedLobby, loadLobby])
     useEffect(() => {
         const fetchLobbies = () => {
             api.get(`/getServerLobbiesByServerId/${serverId}`).then(data => setLobbies(data.lobbies))
@@ -171,20 +176,20 @@ const MainServerInterface: React.FC = () => {
         }
     };
 
-    const handleAddingMembersToLobby =async (data: { userIds: string[]; role: string }) => {
+    const handleAddingMembersToLobby = async (data: { userIds: string[]; role: string }) => {
         console.log("Selected users and role:", data);
-        try{
-            const result = await api.post(`/addMultipleLobbyMembers/${selectedLobby}/members`,data)
-            if(result.ok){
+        try {
+            const result = await api.post(`/addMultipleLobbyMembers/${selectedLobby}/members`, data)
+            if (result.ok) {
                 alert('members are addeed')
                 setOpen(false)
-                setData('loadLobby',true)
+                setData('loadLobby', true)
             }
-        }catch(err:any){
+        } catch (err: any) {
             console.log(err.message)
         }
 
-        
+
     };
 
 
@@ -265,34 +270,9 @@ const MainServerInterface: React.FC = () => {
         { id: '3', name: 'meeting-notes.docx', size: '156 KB', uploadedBy: 'Jane Smith', date: 'Sep 30, 2025' },
     ];
 
-    const getRoleIcon = (role: ServerRole) => {
-        switch (role) {
-            case 'owner':
-                return <Crown className="w-3 h-3 text-yellow-500" />;
-            case 'admin':
-                return <Shield className="w-3 h-3 text-blue-500" />;
-            default:
-                return null;
-        }
-    };
 
-    const getRoleBadge = (role: ServerRole) => {
-        const colors = {
-            owner: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-            admin: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-            member: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-            guest: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-        };
-        return colors[role];
-    };
 
-    const formatTime = (date: Date) => {
-        return new Intl.DateTimeFormat('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-        }).format(date);
-    };
+
 
     const getInitials = (firstName: string, lastName: string) => {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -309,69 +289,10 @@ const MainServerInterface: React.FC = () => {
 
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {lobbyChats.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center">
-                            <Hash className="w-16 h-16 text-muted mb-4" />
-                            <h3 className="text-xl font-bold text-primary mb-2">
-                                Welcome to #{currentLobby?.lobbyName}
-                            </h3>
-                            <p className="text-secondary">This is the beginning of the conversation.</p>
-                        </div>
-                    ) : (
-                        lobbyChats.map((chat) => (
-                            <div key={chat.chatId} className="flex gap-3 hover:bg-secondary/50 p-2 rounded transition-colors group">
-                                <div className="relative flex-shrink-0">
-                                    <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-sm">
-                                        {getInitials(chat.sender.firstName, chat.sender.lastName)}
-                                    </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-primary">
-                                            {chat.sender.firstName} {chat.sender.lastName}
-                                        </span>
-                                        <span className="text-xs text-muted">{formatTime(chat.sentAt)}</span>
-                                        {chat.editedAt && (
-                                            <span className="text-xs text-muted italic">(edited)</span>
-                                        )}
-                                    </div>
-                                    <p className="text-secondary mt-1 break-words">{chat.message}</p>
-                                </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button className="p-1 hover:bg-accent rounded">
-                                        <MoreVertical className="w-4 h-4 text-muted" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                <MessageArea lobbyChats={lobbyChats} currentLobby={currentLobby} getInitials={getInitials}></MessageArea>
 
                 {/* Message Input */}
-                <div className="p-4 border-t border-primary">
-                    <div className="flex items-center gap-2 bg-accent rounded-lg p-2 border border-primary focus-within:border-accent">
-                        <button className="p-2 hover:bg-secondary rounded transition-colors">
-                            <Plus className="w-5 h-5 text-secondary" />
-                        </button>
-                        <input
-                            type="text"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder={`Message #${currentLobby?.lobbyName}`}
-                            className="flex-1 bg-transparent border-none outline-none text-primary placeholder:text-muted"
-                        />
-                        <button className="p-2 hover:bg-secondary rounded transition-colors">
-                            <Smile className="w-5 h-5 text-secondary" />
-                        </button>
-                        <button className="p-2 hover:bg-secondary rounded transition-colors">
-                            <Paperclip className="w-5 h-5 text-secondary" />
-                        </button>
-                        <button className="p-2 bg-primary-600 hover:bg-primary-700 rounded transition-colors">
-                            <Send className="w-5 h-5 text-white" />
-                        </button>
-                    </div>
-                </div>
+                <MessageInputArea></MessageInputArea>
             </>
         );
     };
@@ -519,163 +440,31 @@ const MainServerInterface: React.FC = () => {
             />
 
             {/* Channel Sidebar */}
-            <div className="w-60 bg-sidebar flex flex-col border-r border-primary">
-                {/* Server Header */}
-                <div className="h-14 flex items-center justify-between px-4 border-b border-primary/50 shadow-sm">
-                    <h2 className="font-bold text-white text-lg truncate">{currentServer?.serverName}</h2>
-                    <button className="p-1 hover:bg-secondary/30 rounded transition-colors">
-                        <ChevronDown className="w-5 h-5 text-white" />
-                    </button>
-                </div>
-
-                {/* Search */}
-                <div className="p-3">
-                    <div className="flex items-center gap-2 bg-secondary/20 rounded px-3 py-2">
-                        <Search className="w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search"
-                            className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-gray-400"
-                        />
-                    </div>
-                </div>
-
-                {/* Navigation Tabs */}
-                <div className="flex gap-2 px-3 mb-2">
-                    <button
-                        onClick={() => setActiveView('chat')}
-                        className={`flex-1 py-2 px-3 rounded text-sm font-medium transition-colors ${activeView === 'chat' ? 'bg-primary-600 text-white' : 'text-gray-300 hover:bg-secondary/30'
-                            }`}
-                    >
-                        <Hash className="w-4 h-4 inline mr-1" />
-                        Lobbies
-                    </button>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="px-3 mb-2 grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => setActiveView('invites')}
-                        className={`p-2 rounded transition-colors flex items-center justify-center gap-2 ${activeView === 'invites' ? 'bg-primary-600' : 'bg-secondary/20 hover:bg-secondary/30'
-                            }`}
-                        title="Invites"
-                    >
-                        <UserPlus className="w-4 h-4 text-white" />
-                        <span className="text-xs text-white">Invites</span>
-                    </button>
-                    <button
-                        onClick={() => setActiveView('files')}
-                        className={`p-2 rounded transition-colors flex items-center justify-center gap-2 ${activeView === 'files' ? 'bg-primary-600' : 'bg-secondary/20 hover:bg-secondary/30'
-                            }`}
-                        title="Files"
-                    >
-                        <FolderOpen className="w-4 h-4 text-white" />
-                        <span className="text-xs text-white">Files</span>
-                    </button>
-                </div>
-
-                {/* Lobbies List */}
-                <div className="flex-1 overflow-y-auto px-2">
-                    <div className="mb-4">
-                        <div className="flex items-center justify-between px-2 py-1 mb-1">
-                            <span className="text-xs font-semibold text-gray-400 uppercase">Lobbies</span>
-                            <button onClick={() => setShowCreateLobbyModal(true)} className="p-1 hover:bg-secondary/30 rounded">
-                                <Plus className="w-4 h-4 text-gray-400" />
-                            </button>
-                        </div>
-                        {lobbies?.map((lobby: any) => (
-                            <div key={lobby.lobbyId} className="relative group">
-                                <div
-                                    onClick={() => { setSelectedLobby(lobby.lobbyId); setActiveView('chat'); setSelectedLobbyName(lobby.lobbyName) }}
-                                    className={`w-full cursor-pointer flex items-center gap-2 px-2 py-1.5 rounded mb-0.5 transition-colors ${selectedLobby === lobby.lobbyId && activeView === 'chat'
-                                        ? 'bg-secondary/40 text-white'
-                                        : 'text-gray-300 hover:bg-secondary/20 hover:text-white'
-                                        }`}
-                                >
-                                    {lobby.isPrivate ? (
-                                        <Lock className="w-4 h-4 flex-shrink-0" />
-                                    ) : (
-                                        <Hash className="w-4 h-4 flex-shrink-0" />
-                                    )}
-                                    <span className="text-sm truncate flex-1 text-left">{lobby.lobbyName}</span>
-                                    <LobbyDropdown
-                                        lobbyId={lobby.lobbyId}
-                                        lobbyName={lobby.lobbyName}
-                                        onAddMembers={() => { setOpen(true), setSelectedLobby(lobby.lobbyId) }}
-                                        onDelete={() => { setConfirmModalOpen(true), setSelectedLobby(lobby.lobbyId) }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* User Profile */}
-                <div className="h-14 flex items-center gap-2 px-2 bg-secondary/20 border-t border-primary/50">
-                    <div className="relative">
-                        <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-semibold">
-                            {currentUser && getInitials(currentUser?.firstName, currentUser?.lastName)}
-                        </div>
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-sidebar"></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-white truncate">
-                            {currentUser?.firstName} {currentUser?.lastName}
-                        </div>
-                        <div className="text-xs text-gray-400 truncate">Online</div>
-                    </div>
-                    <button className="p-1.5 hover:bg-secondary/30 rounded transition-colors">
-                        <Settings className="w-4 h-4 text-gray-400" />
-                    </button>
-                </div>
-            </div>
+            <ServerSideBar
+                setActiveView={setActiveView}
+                activeView={activeView}
+                currentServer={currentServer}
+                setShowCreateLobbyModal={setShowCreateLobbyModal}
+                setSelectedLobby={setSelectedLobby}
+                lobbies={lobbies}
+                setSelectedLobbyName={setSelectedLobbyName}
+                selectedLobby={selectedLobby}
+                setConfirmModalOpen={setConfirmModalOpen}
+                setOpen={setOpen}
+                currentUser={currentUser}
+                getInitials={getInitials}
+            ></ServerSideBar>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col">
                 {/* Channel Header */}
-                <div className="h-14 flex items-center justify-between px-4 border-b border-primary shadow-sm">
-                    <div className="flex items-center gap-3">
-                        {activeView === 'chat' && (
-                            <>
-                                {currentLobby?.isPrivate ? (
-                                    <Lock className="w-6 h-6 text-secondary" />
-                                ) : (
-                                    <Hash className="w-6 h-6 text-secondary" />
-                                )}
-                            </>
-                        )}
-                        {activeView === 'invites' && <UserPlus className="w-6 h-6 text-secondary" />}
-                        {activeView === 'files' && <FolderOpen className="w-6 h-6 text-secondary" />}
-                        <div>
-                            <h1 className="font-bold text-primary">
-                                {activeView === 'chat' ? currentLobby?.lobbyName : activeView === 'invites' ? 'Invites' : 'Files'}
-                            </h1>
-                            {activeView === 'chat' && (
-                                <p className="text-xs text-muted">
-                                    {lobbyMembers?.length} members
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-accent rounded transition-colors" title="Notifications">
-                            <Bell className="w-5 h-5 text-secondary" />
-                        </button>
-                        <button className="p-2 hover:bg-accent rounded transition-colors" title="Pinned Messages">
-                            <Pin className="w-5 h-5 text-secondary" />
-                        </button>
-                        <button className="p-2 hover:bg-accent rounded transition-colors" title="Search">
-                            <Search className="w-5 h-5 text-secondary" />
-                        </button>
-                        <button
-                            onClick={() => setShowMembers(!showMembers)}
-                            className="p-2 hover:bg-accent rounded transition-colors"
-                            title="Members"
-                        >
-                            <Users className="w-5 h-5 text-secondary" />
-                        </button>
-                    </div>
-                </div>
+                <ChannelHeader
+                 activeView={activeView}
+                 currentLobby={currentLobby}
+                 lobbyMembers={lobbyMembers}
+                 setShowMembers={setShowMembers}
+                 showMembers={showMembers}
+                 ></ChannelHeader>
 
                 {/* Content */}
                 {activeView === 'chat' && renderChat()}
@@ -685,51 +474,12 @@ const MainServerInterface: React.FC = () => {
 
             {/* Members Sidebar */}
             {showMembers && activeView === 'chat' && (
-                <div className="w-60 bg-secondary border-l border-primary flex flex-col">
-                    <div className="p-4 border-b border-primary">
-                        <h3 className="font-semibold text-primary">{selectedLobby == '' ? 'Server' : selectedLobbyName} </h3>
-                        <h3 className="font-semibold text-primary">Members — {lobbyMembers?.length} </h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2">
-                        {['owner', 'admin', 'member', 'guest'].map((roleFilter) => {
-                            const roleMembers = lobbyMembers?.filter(m => m.role === roleFilter);
-
-                            if (roleMembers?.length === 0) return null;
-
-                            return (
-                                <div key={roleFilter} className="mb-4">
-                                    <div className="px-2 py-1 text-xs font-semibold text-muted uppercase mb-1">
-                                        {roleFilter} — {roleMembers?.length}
-                                    </div>
-                                    {roleMembers?.map((member) => (
-                                        <button
-                                            key={member.userId}
-                                            className="w-full flex items-center gap-3 px-2 py-1.5 rounded hover:bg-accent transition-colors group"
-                                        >
-                                            <div className="relative flex-shrink-0">
-                                                <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-semibold">
-                                                    {getInitials(member.user.firstName, member.user.lastName)}
-                                                </div>
-                                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-secondary"></div>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-sm text-primary truncate">
-                                                        {member.user.firstName} {member.user.lastName}
-                                                    </span>
-                                                    {getRoleIcon(member.role)}
-                                                </div>
-                                                <div className={`text-xs px-2 py-0.5 rounded border inline-block ${getRoleBadge(member.role)}`}>
-                                                    {member.role}
-                                                </div>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+               <MembersSidebar
+               selectedLobby={selectedLobby} 
+               selectedLobbyName={selectedLobbyName}
+               lobbyMembers={lobbyMembers} 
+               getInitials={getInitials}
+               ></MembersSidebar>
             )}
         </div>
     );
