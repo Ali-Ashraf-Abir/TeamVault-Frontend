@@ -4,32 +4,36 @@ import { Hash, MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useSocket } from "../providers/SocketProvider";
 
-export default function MessageArea({ selectedLobbyName, getInitials, userId,selectedLobby,serverId }: any) {
+export default function MessageArea({ selectedLobbyName, getInitials, userId, selectedLobby, serverId }: any) {
     const [lobbyChats, setLobbyChats] = useState<any[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
     const socket = useSocket()
-    useEffect(()=>{
+    useEffect(() => {
 
-        if(selectedLobby){
-            api.get(`/chats/${selectedLobby}`).then(data=> setLobbyChats(data.data))
+        if (selectedLobby) {
+            api.get(`/chats/${selectedLobby}`).then(data => setLobbyChats(data.data))
         }
-    },[selectedLobby])
+    }, [selectedLobby])
 
     useEffect(() => {
         // Listen for new messages
+        console.log("selected lobby id",selectedLobby)
         const handleNewMessage = (arg: any) => {
             console.log("Received new message:", arg);
+            if(arg.lobbyId == selectedLobby)
             setLobbyChats((prev) => [...prev, arg]);
         };
 
         socket.on("new_message", handleNewMessage);
-        socket.emit("join_user_lobbies",{
-            userId,serverId
+        socket.emit("join_user_lobbies", {
+            userId, serverId
         })
+
+
         return () => {
             socket.off("new_message", handleNewMessage);
         };
-    }, []);
+    }, [selectedLobby]);
 
     const formatTime = (date: Date | string) => {
         const d = new Date(date);

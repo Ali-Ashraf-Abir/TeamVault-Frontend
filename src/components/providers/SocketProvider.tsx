@@ -14,6 +14,7 @@ export const SocketProvider = ({ serverId, children ,user}: { serverId: string, 
     if (!user?.userId || !serverId) return;
 
     // Join user lobbies once
+    socket.emit("register_user",(user.userId))
     socket.emit('join_user_lobbies', { userId: user.userId, serverId });
 
     const handleJoined = (arg: any) => {

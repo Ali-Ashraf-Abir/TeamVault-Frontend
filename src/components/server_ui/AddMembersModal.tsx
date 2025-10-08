@@ -1,3 +1,4 @@
+import socket from "@/utils/socketClient";
 import React, { useState, useEffect } from "react";
 
 interface AddMembersModalProps {
@@ -36,6 +37,8 @@ export const AddMembersModal: React.FC<AddMembersModalProps> = ({
       userIds: selectedIds,
       role,
     });
+    socket.emit("member_added_to_lobby", { userId: selectedIds});
+    // socket.emit("member_added_to_lobby", { userId: ["test123"] });
     setSelectedIds([]);
     setRole("member");
   };
