@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Calendar, Copy, MoreVertical, Users, X } from "lucide-react";
+import { ServerInvite } from "./MainServerInterface";
 
 interface Redemption {
     redemptionId: string;
@@ -27,7 +28,7 @@ interface Invite {
 }
 
 interface Props {
-    invite: Invite;
+    invite: ServerInvite;
     onRevoke?: (inviteId: string) => void; // optional callback to revoke invite
 }
 
@@ -164,7 +165,7 @@ export default function ServerInviteCards({ invite, onRevoke }: Props) {
                             <ul className="max-h-60 overflow-y-auto">
                                 {invite.redempions.map((r) => (
                                     <li
-                                        key={r.redemptionId}
+                                        key={r.redemtionId}
                                         className="flex justify-between border-b border-border-accent py-1 text-sm text-secondary"
                                     >
                                         <span>

@@ -15,6 +15,8 @@ import MessageInputArea from './MessageInputArea';
 import ServerSideBar from './ServerSideBar';
 import ChannelHeader from './ChannelHeader';
 import MembersSidebar from './MembersSidebar';
+import ServerLandingPage from './ServerLandingPage';
+import socket from '@/utils/socketClient';
 export type ServerRole = 'owner' | 'admin' | 'member' | 'guest';
 type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
 interface User {
@@ -59,7 +61,7 @@ interface Chat {
     sender: User;
 }
 
-interface ServerInvite {
+export interface ServerInvite {
     inviteId: string;
     serverId: string;
     code: string;
@@ -68,6 +70,20 @@ interface ServerInvite {
     uses: number;
     revoked: boolean;
     createdAt: Date;
+    creator: {
+        firstName: string;
+        lastName: string;
+        email: string;
+    }
+    redempions: {
+        redemtionId: string;
+        user: {
+            firstName: string;
+            lastName: string;
+            email: string;
+        }
+        redeemedAt: string
+    }[]
 }
 
 interface UserInvite {
@@ -81,7 +97,7 @@ interface UserInvite {
 }
 
 const MainServerInterface: React.FC = () => {
-    const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files'>('chat');
+    const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files' | "">("");
     const [selectedLobby, setSelectedLobby] = useState<string>('');
 
     const [showMembers, setShowMembers] = useState(true);
@@ -104,7 +120,7 @@ const MainServerInterface: React.FC = () => {
     // global states
     const { getData, setData } = useGlobal()
     // invite apis
-    const [serverInvites, setServerInviteData] = useState<any>()
+    const [serverInvites, setServerInviteData] = useState<ServerInvite[]>([])
     const loadLobby = getData('loadLobby')
     const onRevoke = async (inviteId: string) => {
         const revoke = await api.post(`/invite/revokeInvite/${inviteId}`)
@@ -113,7 +129,7 @@ const MainServerInterface: React.FC = () => {
         }
     }
     useEffect(() => {
-        const serverInviteData = api.get(`/server/${serverId}/invites`).then(data => setServerInviteData(data))
+        api.get(`/server/${serverId}/invites`).then(data => setServerInviteData(data))
         setData('loadInvite', false)
     }, [getData('loadInvite')])
 
@@ -153,12 +169,6 @@ const MainServerInterface: React.FC = () => {
             console.error('Failed to create lobby:', error);
         }
     };
-
-    // const handleAddMembersToLobby = (lobbyId: string, lobbyName: string) => {
-    //     // Open modal or navigate to add members screen
-    //     console.log('Add members to lobby:', lobbyId, lobbyName);
-    //     // You can implement a separate modal for this
-    // };
 
     const handleDeleteLobby = async (lobbyId: string) => {
         try {
@@ -208,16 +218,29 @@ const MainServerInterface: React.FC = () => {
         }
     }, [selectedLobby, serverData])
 
+
+    // websockets for chatting
+    // useEffect(() => {
+    //     if (user?.userId && serverId) {
+    //         socket.emit("join_user_lobbies", {
+    //             userId: user.userId,
+    //             serverId: serverId,
+    //         });
+
+    //         const handleJoined = (arg: any) => {
+    //             console.log(arg);
+    //         };
+
+    //         socket.on("joined_lobbies", handleJoined);
+
+    //         return () => {
+    //             socket.off("joined_lobbies", handleJoined);
+    //         };
+    //     }
+    // }, [user?.userId, serverId]);
+
     const currentServer: Server = serverData
     const lobbyMembers: ServerMembership[] = lobbyData?.members
-
-    // Mock chats
-
-    const mockUsers = [
-        { userId: "1", firstName: "Alice", lastName: "Smith", email: "alice@example.com" },
-        { userId: "2", firstName: "Bob", lastName: "Johnson", email: "bob@example.com" },
-        { userId: "3", firstName: "Charlie", lastName: "Lee", email: "charlie@example.com" },
-    ];
 
     const chats: Chat[] = [
         {
@@ -275,13 +298,12 @@ const MainServerInterface: React.FC = () => {
 
 
     const getInitials = (firstName: string, lastName: string) => {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        return `${firstName?.charAt(0)}${lastName?.charAt(0)}`.toUpperCase();
     };
 
 
 
     const renderChat = () => {
-        const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
         const lobbyChats = chats.filter(c => c.lobbyId === selectedLobby);
 
         return (
@@ -289,10 +311,10 @@ const MainServerInterface: React.FC = () => {
 
 
                 {/* Messages Area */}
-                <MessageArea lobbyChats={lobbyChats} currentLobby={currentLobby} getInitials={getInitials}></MessageArea>
+                <MessageArea lobbyChats={lobbyChats} selectedLobbyName={selectedLobbyName} getInitials={getInitials} userId={user?.userId} selectedLobby={selectedLobby} serverId={serverId}></MessageArea>
 
                 {/* Message Input */}
-                <MessageInputArea></MessageInputArea>
+                <MessageInputArea selectedLobbyName={selectedLobbyName} serverId={serverId} lobbyId={selectedLobby} sentBy={user?.userId}></MessageInputArea>
             </>
         );
     };
@@ -321,7 +343,7 @@ const MainServerInterface: React.FC = () => {
                         Invite Links
                     </h3>
                     <div className="space-y-3">
-                        {serverInvites.map((invite: any) => (
+                        {serverInvites.map((invite) => (
                             <ServerInviteCards key={invite.inviteId} invite={invite} onRevoke={onRevoke}>
 
                             </ServerInviteCards>
@@ -459,14 +481,15 @@ const MainServerInterface: React.FC = () => {
             <div className="flex-1 flex flex-col">
                 {/* Channel Header */}
                 <ChannelHeader
-                 activeView={activeView}
-                 currentLobby={currentLobby}
-                 lobbyMembers={lobbyMembers}
-                 setShowMembers={setShowMembers}
-                 showMembers={showMembers}
-                 ></ChannelHeader>
+                    activeView={activeView}
+                    currentLobby={currentLobby}
+                    lobbyMembers={lobbyMembers}
+                    setShowMembers={setShowMembers}
+                    showMembers={showMembers}
+                ></ChannelHeader>
 
                 {/* Content */}
+                {activeView === '' && <ServerLandingPage onCreateLobby={setShowCreateLobbyModal}></ServerLandingPage>}
                 {activeView === 'chat' && renderChat()}
                 {activeView === 'invites' && renderInvites()}
                 {activeView === 'files' && renderFiles()}
@@ -474,12 +497,12 @@ const MainServerInterface: React.FC = () => {
 
             {/* Members Sidebar */}
             {showMembers && activeView === 'chat' && (
-               <MembersSidebar
-               selectedLobby={selectedLobby} 
-               selectedLobbyName={selectedLobbyName}
-               lobbyMembers={lobbyMembers} 
-               getInitials={getInitials}
-               ></MembersSidebar>
+                <MembersSidebar
+                    selectedLobby={selectedLobby}
+                    selectedLobbyName={selectedLobbyName}
+                    lobbyMembers={lobbyMembers}
+                    getInitials={getInitials}
+                ></MembersSidebar>
             )}
         </div>
     );

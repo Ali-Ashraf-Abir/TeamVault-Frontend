@@ -61,9 +61,8 @@ export const AddMembersModal: React.FC<AddMembersModalProps> = ({
             return (
               <div
                 key={userId}
-                className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-accent ${
-                  isMember ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-accent ${isMember ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 onClick={() => !isMember && toggleSelect(userId)}
               >
                 <div>

@@ -96,6 +96,7 @@ const CreateLobbyModal: React.FC<CreateLobbyModalProps> = ({ serverId, onClose, 
     const cleanName = lobbyName.trim().toLowerCase().replace(/\s+/g, '-');
     
     onCreateLobby({ lobbyName: cleanName, isPrivate,serverId ,creatorId});
+
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
