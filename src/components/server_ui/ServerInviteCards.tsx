@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Calendar, Copy, MoreVertical, Users, X } from "lucide-react";
-import { ServerInvite } from "./MainServerInterface";
+import { ServerInvite } from "@/app/types/serverTypes";
+
 
 interface Redemption {
     redemptionId: string;

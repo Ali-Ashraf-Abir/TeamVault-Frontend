@@ -3,6 +3,7 @@ import { Plus, LinkIcon, UserPlus } from 'lucide-react';
 import ServerInviteCards from '../ServerInviteCards';
 import InviteModal from '../InviteModal';
 import { ServerInvite } from '@/app/types/serverTypes';
+import UserInviteUi from '../UserInviteUi';
 
 
 interface InvitesViewProps {
@@ -22,6 +23,7 @@ const InvitesView: React.FC<InvitesViewProps> = ({
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
+      <UserInviteUi serverId={serverId} userId={userId} />
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -63,7 +65,9 @@ const InvitesView: React.FC<InvitesViewProps> = ({
           serverId={serverId}
         />
       )}
+   
     </div>
+   
   );
 };
 

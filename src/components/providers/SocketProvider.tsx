@@ -6,15 +6,15 @@ import { useGlobal } from '@/context/GlobalContext';
 
 const SocketContext = createContext(socket);
 
-export const SocketProvider = ({ serverId, children ,user}: { serverId: string, children: React.ReactNode,user:any }) => {
+export const SocketProvider = ({ serverId, children, user }: { serverId: string, children: React.ReactNode, user: any }) => {
 
-  const {getData}=useGlobal()
-  const rejoinUser=getData("rejoinUser")
+  const { getData } = useGlobal()
+  const rejoinUser = getData("rejoinUser")
   useEffect(() => {
     if (!user?.userId || !serverId) return;
 
     // Join user lobbies once
-    socket.emit("register_user",(user.userId))
+    socket.emit("register_user", (user.userId))
     socket.emit('join_user_lobbies', { userId: user.userId, serverId });
 
     const handleJoined = (arg: any) => {
@@ -26,7 +26,9 @@ export const SocketProvider = ({ serverId, children ,user}: { serverId: string, 
     return () => {
       socket.off('joined_lobbies', handleJoined);
     };
-  }, [user?.userId, serverId,rejoinUser]);
+  }, [user?.userId, serverId, rejoinUser]);
+
+
 
   return (
     <SocketContext.Provider value={socket}>

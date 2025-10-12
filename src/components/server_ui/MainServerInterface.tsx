@@ -20,6 +20,9 @@ import { useServerInvites } from '../hooks/useServerInvites';
 import ChatView from './views/ChatViews';
 import InvitesView from './views/InvitesViews';
 import { getUserData } from '@/utils/userHandler';
+import { useGlobalSocketListeners } from '@/context/SocketContext';
+import socket from '@/utils/socketClient';
+
 
 const MainServerInterface: React.FC = () => {
   const params = useParams();
@@ -54,7 +57,12 @@ const MainServerInterface: React.FC = () => {
   const [selectedLobbyName, setSelectedLobbyName] = useState('');
   const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
   const lobbyMembers = lobbyData?.members;
+  // notifications
+  const {notifications}=useGlobalSocketListeners()
 
+  useEffect(()=>{
+    console.log(notifications)
+  },[notifications])
   // Handlers
   const handleCreateLobby = async (data: any) => {
     const success = await createLobby({
@@ -143,6 +151,7 @@ const MainServerInterface: React.FC = () => {
           currentLobby={currentLobby}
           lobbyMembers={lobbyMembers}
           setShowMembers={setShowMembers}
+          user={user}
           showMembers={showMembers}
         />
 

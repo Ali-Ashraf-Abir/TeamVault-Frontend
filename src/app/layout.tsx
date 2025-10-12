@@ -3,6 +3,7 @@ import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { GlobalProvider } from '@/context/GlobalContext'
+import { SocketProvider } from '@/context/SocketContext'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const poppins = Poppins({
@@ -27,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body className="min-h-screen">
-        <GlobalProvider>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
-        </GlobalProvider>
+        <SocketProvider>
+          <GlobalProvider>
+            <ThemeProvider>
+              {children}
+            </ThemeProvider>
+          </GlobalProvider>
+        </SocketProvider>
       </body>
     </html>
   )

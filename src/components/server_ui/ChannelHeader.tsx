@@ -1,6 +1,7 @@
 import { Bell, FolderOpen, Hash, Lock, Pin, Search, UserPlus, Users } from "lucide-react";
+import NotificationDropdown from "./NotificationDorpdown";
 
-function ChannelHeader({activeView,currentLobby,lobbyMembers,setShowMembers,showMembers}:any) {
+function ChannelHeader({activeView,currentLobby,lobbyMembers,setShowMembers,showMembers,user}:any) {
     return ( 
         <div className="h-14 flex items-center justify-between px-4 border-b border-primary shadow-sm">
                     <div className="flex items-center gap-3">
@@ -27,9 +28,9 @@ function ChannelHeader({activeView,currentLobby,lobbyMembers,setShowMembers,show
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-accent rounded transition-colors" title="Notifications">
-                            <Bell className="w-5 h-5 text-secondary" />
-                        </button>
+                        <div className="p-2 hover:bg-accent rounded transition-colors" title="Notifications">
+                            <NotificationDropdown recipientId={user?.userId} />
+                        </div>
                         <button className="p-2 hover:bg-accent rounded transition-colors" title="Pinned Messages">
                             <Pin className="w-5 h-5 text-secondary" />
                         </button>
