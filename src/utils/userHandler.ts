@@ -1,4 +1,4 @@
-import { api } from "@/api/api";
+import { api, refreshAccessToken } from "@/api/api";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
@@ -34,32 +34,37 @@ export function decodeJwt(token: string): JwtPayload | null {
 //     }
 // }
 
-
 export async function getUserData(): Promise<any | null> {
     try {
-        // 1. Check access token in cookies
-        const accessToken = Cookies.get("accessToken");
+        let accessToken = Cookies.get("accessToken");
 
-        if (accessToken) {
-            // 2. If token exists, get userData from localStorage
-            const payload = decodeJwt(accessToken);
-            if (!payload?.userId) return "invalid user id";
-            const localData = localStorage.getItem("userData");
-            if (localData) {
-                return JSON.parse(localData);
+        if (!accessToken) {
+            const newToken = await refreshAccessToken();
+            if (!newToken) {
+                localStorage.removeItem("userData");
+                return null;
             }
-
-            // 3. If no local data, fetch from API
-            const userData = await api.get(`/user/${payload.userId}`);
-
-            if (!userData) throw new Error("Failed to fetch user data");
-            localStorage.setItem("userData", JSON.stringify(userData));
-            return userData;
-        } else {
-            // 4. No token → clear localStorage
+            accessToken = newToken;
+        }
+        // Decode access token to get userId
+        const payload = decodeJwt(accessToken);
+        if (!payload?.userId) {
             localStorage.removeItem("userData");
             return null;
         }
+
+        // Check localStorage for cached user data
+        const localData = localStorage.getItem("userData");
+        if (localData) {
+            return JSON.parse(localData);
+        }
+
+        // Fetch from API if not in localStorage
+        const userData = await api.get(`/user/${payload.userId}`);
+        if (!userData) throw new Error("Failed to fetch user data");
+
+        localStorage.setItem("userData", JSON.stringify(userData));
+        return userData;
     } catch (error) {
         console.error("Error getting user data:", error);
         localStorage.removeItem("userData");

@@ -6,27 +6,18 @@ import Link from "next/link";
 import socket from "@/utils/socketClient";
 import { api } from "@/api/api";
 import { useGlobal } from "@/context/GlobalContext";
+import { Notification } from "@/app/types/serverTypes";
 
-interface Notification {
-  lobbyId: string;
-  notificationId: string;
-  type: string;
-  title?: string;
-  message?: string;
-  link?: string;
-  isRead: boolean;
-  createdAt: string;
-  sender?: { firstName: string; lastName: string };
-}
+
 
 interface NotificationDropdownProps {
   recipientId: string;
-  activeLobby:{
-    lobbyId:string
+  activeLobby: {
+    lobbyId: string
   };
 }
 
-const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ recipientId,activeLobby }) => {
+const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ recipientId, activeLobby }) => {
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -42,7 +33,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ recipientId
     const data: any = {}
     if (cursorId) query.append("cursor", cursorId);
     const res = api.get(`/getNotifications/${recipientId}?${query.toString()}`).then(data => {
-  
+
       if (data.notifications) {
         setNotifications(prev => cursorId ? [...prev, ...data.notifications] : data.notifications);
         if (data.notifications.length > 0) {
@@ -60,7 +51,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ recipientId
       fetchNotifications();
       setData('loadNotification', false)
     }
-
+    console.log(notifications,'notifications from notification bell')
+    console.log(unreadCount)
   }, [recipientId, loadNotification]);
 
   // Listen to socket for new notifications

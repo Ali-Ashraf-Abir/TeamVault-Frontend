@@ -4,6 +4,7 @@ import { LobbyDropdown } from "./CreateLobbyModal";
 import { useEffect, useState } from "react";
 import { api } from "@/api/api";
 import { useGlobal } from "@/context/GlobalContext";
+import Link from "next/link";
 
 export default function ServerSideBar({ setActiveView, activeView, currentServer, setShowCreateLobbyModal, setSelectedLobbyName, setSelectedLobby, selectedLobby, lobbies, setConfirmModalOpen, setOpen, currentUser, getInitials, notifications }: any) {
 
@@ -14,11 +15,17 @@ export default function ServerSideBar({ setActiveView, activeView, currentServer
 
     const unreadCountMap = notifications.reduce((acc: Record<string, number>, notif: any) => {
         if (!notif.isRead && notif.lobbyId) {
-            acc[notif.lobbyId] = (acc[notif.lobbyId] || 0) + 1;
+            if (notif.lobbyId != selectedLobby) {
+                acc[notif.lobbyId] = (acc[notif.lobbyId] || 0) + 1;
+            }
+
         }
         return acc;
     }, {});
-
+    useEffect(() => {
+        console.log(unreadCountMap)
+        console.log(notifications ,'from server side bar')
+    }, [unreadCountMap])
     const handleNOtificationRead = async (lobbyId: string) => {
         if (!lobbyId) return;
         await api.post(`/markRead/${currentUser?.userId}`, { lobbyId });
@@ -100,9 +107,9 @@ export default function ServerSideBar({ setActiveView, activeView, currentServer
 
                         return (
                             <div key={lobby.lobbyId} className="relative group">
-                                <div
+                                <Link href={`/server/${currentServer?.serverId}/lobbies/${lobby?.lobbyId}`}> <div
                                     onClick={() => {
-                                        setSelectedLobby(lobby.lobbyId);
+                                        // setSelectedLobby(lobby.lobbyId);
                                         setActiveView('chat');
                                         setSelectedLobbyName(lobby.lobbyName);
 
@@ -130,7 +137,7 @@ export default function ServerSideBar({ setActiveView, activeView, currentServer
                                         onAddMembers={() => { setOpen(true); setSelectedLobby(lobby.lobbyId); }}
                                         onDelete={() => { setConfirmModalOpen(true); setSelectedLobby(lobby.lobbyId); }}
                                     />
-                                </div>
+                                </div></Link>
                             </div>
                         );
                     })}

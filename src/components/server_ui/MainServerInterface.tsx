@@ -1,5 +1,5 @@
 'use client';
-import React, { act, useEffect, useState } from 'react';
+import React, { act, useEffect, useLayoutEffect, useState } from 'react';
 import { useParams } from "next/navigation";
 
 // Import sub-components
@@ -21,14 +21,18 @@ import InvitesView from './views/InvitesViews';
 import { getUserData } from '@/utils/userHandler';
 import { useGlobalSocketListeners } from '@/context/SocketContext';
 import { useGlobal } from '@/context/GlobalContext';
+import socket from '@/utils/socketClient';
+import { Notification } from '@/app/types/serverTypes';
+import { api } from '@/api/api';
 
 
 
 const MainServerInterface: React.FC = () => {
   const params = useParams();
   const serverId = params.server_id as string;
+  const activeLobby = params.lobby_id as string
   const [user, setUser] = useState<any>()
-
+  const { setData } = useGlobal()
   useEffect(() => {
     async function getUser() {
       const user = await getUserData()
@@ -38,18 +42,22 @@ const MainServerInterface: React.FC = () => {
   }, [])
 
 
-
   // View state
-  const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files' | ''>('');
-  const [showMembers, setShowMembers] = useState(true);
-  const {getData}=useGlobal()
-  const activeLobby= getData("activeLobby")
-  useEffect(() => {
+  const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files' | ''>(
+    activeLobby ? 'chat' : ''
+  );
+  const [isInitialized, setIsInitialized] = useState(false);
+  useLayoutEffect(() => {
     if (activeLobby) {
-      setActiveView('chat')
+
       setSelectedLobby(activeLobby)
     }
+    setIsInitialized(true)
   }, [activeLobby])
+
+  const [showMembers, setShowMembers] = useState(true);
+
+
   // Modal state
   const [showCreateLobbyModal, setShowCreateLobbyModal] = useState(false);
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -67,11 +75,32 @@ const MainServerInterface: React.FC = () => {
   const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
   const lobbyMembers = lobbyData?.members;
   // notifications
-  const { notifications } = useGlobalSocketListeners()
 
+
+  // const { notifications } = useGlobalSocketListeners()
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   useEffect(() => {
+    if (!socket) return;
 
-  }, [notifications])
+    const handleNewNotification = async (notif: Notification) => {
+      if (notif.type === "message" && notif.lobbyId === activeLobby) {
+        // Mark read immediately
+        await api.post(`/markRead/${user?.userId}`, { lobbyId: activeLobby });
+        setData("loadNotification", true);
+
+        // Add notification but mark as read locally
+        setNotifications(prev => [{ ...notif, isRead: true }, ...prev]);
+      } else {
+        setNotifications(prev => [notif, ...prev]);
+      }
+    };
+
+    socket.on("new_notification", handleNewNotification);
+    return () => {
+      socket.off("new_notification", handleNewNotification);
+    };
+  }, [socket, activeLobby]);
+
   // Handlers
   const handleCreateLobby = async (data: any) => {
     const success = await createLobby({
@@ -107,6 +136,7 @@ const MainServerInterface: React.FC = () => {
     return `${firstName?.charAt(0)}${lastName?.charAt(0)}`.toUpperCase();
   };
 
+  if (!isInitialized) return <div>Loading</div>; 
   return (
     <div className="flex h-screen bg-primary text-primary">
       {/* Modals */}

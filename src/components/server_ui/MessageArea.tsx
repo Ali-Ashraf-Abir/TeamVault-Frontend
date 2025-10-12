@@ -11,17 +11,26 @@ export default function MessageArea({ selectedLobbyName, getInitials, userId, se
     useEffect(() => {
 
         if (selectedLobby) {
-            api.get(`/chats/${selectedLobby}`).then(data => setLobbyChats(data.data))
+            // console.log("fetching data with lobby id ", selectedLobby)
+            api.get(`/chats/${selectedLobby}`).then(data => {
+                setLobbyChats(data.data)
+                // console.log(data.data)
+            })
         }
+        // console.log('selecteLobby From Message Area', selectedLobby)
+
     }, [selectedLobby])
+    useEffect(() => {
+        // console.log(lobbyChats)
+    },[lobbyChats])
 
     useEffect(() => {
         // Listen for new messages
-    
+
         const handleNewMessage = (arg: any) => {
-          
-            if(arg.lobbyId == selectedLobby)
-            setLobbyChats((prev) => [...prev, arg]);
+
+            if (arg.lobbyId == selectedLobby)
+                setLobbyChats((prev) => [...prev, arg]);
         };
 
         socket.on("new_message", handleNewMessage);

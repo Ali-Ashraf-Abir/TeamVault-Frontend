@@ -19,7 +19,7 @@ export function LoginForm() {
 
     try {
       const result = await api.post('/auth/login', formData)
-      Cookies.set("accessToken", result.accessToken);
+      Cookies.set("accessToken", result.accessToken),{ expires: 30 / 1440 };
       setIsLoading(false)
       setError(null)
       router.push('/dashboard')

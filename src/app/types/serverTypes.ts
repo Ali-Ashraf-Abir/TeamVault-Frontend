@@ -76,3 +76,14 @@ export interface UserInvite {
     createdAt: Date;
     sender: User;
 }
+export interface Notification {
+  lobbyId: string;
+  notificationId: string;
+  type: string;
+  title?: string;
+  message?: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+  sender?: { firstName: string; lastName: string };
+}

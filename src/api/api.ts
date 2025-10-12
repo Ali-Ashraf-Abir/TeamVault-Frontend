@@ -8,21 +8,21 @@ interface ApiOptions {
 }
 
 function getToken(): any {
-  if(Cookies.get('accessToken')) return Cookies.get('accessToken')
+  if (Cookies.get('accessToken')) return Cookies.get('accessToken')
 
 }
 
 export async function refreshAccessToken(): Promise<string | null> {
   try {
-    const response = await api.post('/auth/refresh'); // Call the refresh token endpoint
+    const response = await api.post('/auth/refresh'); 
     if (response.accessToken) {
-      localStorage.setItem('accessToken', response.accessToken); // Store the new access token
+      Cookies.set("accessToken", response.accessToken);
       return response.accessToken;
     }
     throw new Error('Failed to refresh token');
   } catch (error) {
     console.error('Error refreshing access token:', error);
-    return null; // Return null if refresh failed
+    return null; 
   }
 }
 
@@ -40,7 +40,7 @@ export async function apiCall<T = any>(
 
   const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api'
   const url = `${baseURL}${endpoint}`
-  
+
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...headers
@@ -64,7 +64,7 @@ export async function apiCall<T = any>(
   if (body && method !== 'GET') {
     if (body instanceof FormData) {
       config.body = body
-   
+
       delete requestHeaders['Content-Type']
     } else {
       config.body = JSON.stringify(body)
@@ -89,19 +89,19 @@ export async function apiCall<T = any>(
       data = await response.text()
     }
 
-    
+
     if (!response.ok) {
-  
+
       if (response.status === 401 && retry) {
         console.log('Unauthorized - attempting to refresh the access token...');
-        
-  
+
+
         const newToken = await refreshAccessToken();
-        
+
         if (newToken) {
           requestHeaders['Authorization'] = `Bearer ${newToken}`;
           const retryResponse = await fetch(url, { ...config, headers: requestHeaders });
-          
+
           const retryContentType = retryResponse.headers.get('content-type');
           let retryData: any;
 
@@ -113,7 +113,7 @@ export async function apiCall<T = any>(
 
 
           if (!retryResponse.ok) {
-            
+
             throw {
               status: retryResponse.status,
               message: retryData?.message || retryResponse.statusText,
