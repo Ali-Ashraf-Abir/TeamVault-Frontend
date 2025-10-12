@@ -18,7 +18,7 @@ export const SocketProvider = ({ serverId, children, user }: { serverId: string,
     socket.emit('join_user_lobbies', { userId: user.userId, serverId });
 
     const handleJoined = (arg: any) => {
-      console.log('Joined lobbies:', arg);
+  
     };
 
     socket.on('joined_lobbies', handleJoined);

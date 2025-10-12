@@ -27,7 +27,7 @@ export default function InviteModal({ setShowInviteModal, serverId,userId }: Inv
   const handleExpirationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, expiration: e.target.value }));
   };
-  console.log(userId)
+
   const handleMaxUsesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, maxUses: e.target.value }));
   };
@@ -86,7 +86,7 @@ export default function InviteModal({ setShowInviteModal, serverId,userId }: Inv
         maxUses: getMaxUses(formData.maxUses),
       };
 
-      console.log('Creating invite with data:', payload);
+
 
       // Simulate API call
       const response =await api.post('/invite/createInvite',payload)
@@ -96,7 +96,7 @@ export default function InviteModal({ setShowInviteModal, serverId,userId }: Inv
       }
 
 
-      console.log('Invite created successfully:', response);
+    
       setData('loadInvite',true)
       // Close modal on success
       setShowInviteModal(false);

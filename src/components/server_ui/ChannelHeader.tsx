@@ -29,7 +29,7 @@ function ChannelHeader({activeView,currentLobby,lobbyMembers,setShowMembers,show
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="p-2 hover:bg-accent rounded transition-colors" title="Notifications">
-                            <NotificationDropdown recipientId={user?.userId} />
+                            <NotificationDropdown recipientId={user?.userId} activeLobby={currentLobby}/>
                         </div>
                         <button className="p-2 hover:bg-accent rounded transition-colors" title="Pinned Messages">
                             <Pin className="w-5 h-5 text-secondary" />

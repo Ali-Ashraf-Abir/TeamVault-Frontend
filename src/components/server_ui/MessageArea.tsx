@@ -17,9 +17,9 @@ export default function MessageArea({ selectedLobbyName, getInitials, userId, se
 
     useEffect(() => {
         // Listen for new messages
-        console.log("selected lobby id",selectedLobby)
+    
         const handleNewMessage = (arg: any) => {
-            console.log("Received new message:", arg);
+          
             if(arg.lobbyId == selectedLobby)
             setLobbyChats((prev) => [...prev, arg]);
         };

@@ -14,7 +14,7 @@ export default function InvitePage({ params }: { params: { code: string } }) {
     useEffect(() => {
         getUserData().then(data => setUser(data))
     }, [])
-    console.log(user)
+
     useEffect(() => {
         async function redeemInvite() {
             try {
@@ -34,7 +34,7 @@ export default function InvitePage({ params }: { params: { code: string } }) {
                     setMessage(res.error || "Invalid or expired invite.")
                 }
             } catch (err:any) {
-                console.log(err)
+            
                 setStatus("error")
                 setMessage(err?.data?.error || "Something went wrong. Please try again.")
             }

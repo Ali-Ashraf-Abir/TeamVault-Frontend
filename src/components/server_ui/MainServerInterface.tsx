@@ -1,7 +1,6 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import { useParams } from "next/navigation";
-import { useUser } from '@/context/GlobalContext';
 
 // Import sub-components
 import ServerSideBar from './ServerSideBar';
@@ -21,26 +20,36 @@ import ChatView from './views/ChatViews';
 import InvitesView from './views/InvitesViews';
 import { getUserData } from '@/utils/userHandler';
 import { useGlobalSocketListeners } from '@/context/SocketContext';
-import socket from '@/utils/socketClient';
+import { useGlobal } from '@/context/GlobalContext';
+
 
 
 const MainServerInterface: React.FC = () => {
   const params = useParams();
   const serverId = params.server_id as string;
-  const [user,setUser]=useState<any>()
+  const [user, setUser] = useState<any>()
 
-  useEffect(()=>{
-    async function getUser(){
-        const user = await getUserData()
-        setUser(user)
-    } 
+  useEffect(() => {
+    async function getUser() {
+      const user = await getUserData()
+      setUser(user)
+    }
     getUser()
-  },[])
-  
+  }, [])
+
+
+
   // View state
   const [activeView, setActiveView] = useState<'chat' | 'invites' | 'files' | ''>('');
   const [showMembers, setShowMembers] = useState(true);
-
+  const {getData}=useGlobal()
+  const activeLobby= getData("activeLobby")
+  useEffect(() => {
+    if (activeLobby) {
+      setActiveView('chat')
+      setSelectedLobby(activeLobby)
+    }
+  }, [activeLobby])
   // Modal state
   const [showCreateLobbyModal, setShowCreateLobbyModal] = useState(false);
   const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -48,7 +57,7 @@ const MainServerInterface: React.FC = () => {
 
   // Custom hooks for data management
   const { serverData } = useServer(serverId);
-  const { lobbies, selectedLobby, setSelectedLobby, createLobby, deleteLobby } = 
+  const { lobbies, selectedLobby, setSelectedLobby, createLobby, deleteLobby } =
     useLobbies(serverId, user?.userId);
   const { lobbyData, addMembers } = useLobbyDetails(selectedLobby, serverData);
   const { invites, revokeInvite } = useServerInvites(serverId);
@@ -58,11 +67,11 @@ const MainServerInterface: React.FC = () => {
   const currentLobby = lobbies?.find((l: any) => l.lobbyId === selectedLobby);
   const lobbyMembers = lobbyData?.members;
   // notifications
-  const {notifications}=useGlobalSocketListeners()
+  const { notifications } = useGlobalSocketListeners()
 
-  useEffect(()=>{
-    console.log(notifications)
-  },[notifications])
+  useEffect(() => {
+
+  }, [notifications])
   // Handlers
   const handleCreateLobby = async (data: any) => {
     const success = await createLobby({
@@ -130,6 +139,7 @@ const MainServerInterface: React.FC = () => {
 
       {/* Sidebar */}
       <ServerSideBar
+        notifications={notifications}
         setActiveView={setActiveView}
         activeView={activeView}
         currentServer={serverData}
