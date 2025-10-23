@@ -1,7 +1,8 @@
 'use client';
-import React, { useState } from 'react';
-import { Search, Check, X, UserPlus } from 'lucide-react';
-import { UserInvite } from '@/app/types/serverTypes';
+import React, { useEffect, useState } from 'react';
+import { Search, Check, X, UserPlus, Trash2 } from 'lucide-react';
+import { api } from '@/api/api';
+import socket from '@/utils/socketClient';
 
 interface User {
   userId: string;
@@ -10,75 +11,121 @@ interface User {
   email: string;
 }
 
+interface UserInvite {
+  inviteId: string;
+  serverId: string;
+  invitedBy: string;
+  invitedUserId: string;
+  reciever: {
+    firstName: string;
+    lastName: string;
+  }
+  invitedUser: {
+    firstName: string;
+    lastName: string;
+    userId: string
+  }
+  sender: {
+    firstName: string;
+    lastName: string;
+  }
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
 interface UserInviteUiProps {
   serverId: string;
+  user: User; // current user 
   userId: string | undefined;
 }
 
-const UserInviteUi: React.FC<UserInviteUiProps> = ({ serverId, userId }) => {
+const UserInviteUi: React.FC<UserInviteUiProps> = ({ serverId, user }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [invites, setInvites] = useState<any[]>([]);
+  const [searchResult, setSearchResult] = useState<User | null>(null);
+  const [sentInvites, setSentInvites] = useState<UserInvite[]>([]);
+  const [receivedInvites, setReceivedInvites] = useState<UserInvite[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // --- Simulated current user info ---
-  const currentUser: User = {
-    userId: userId || 'u1',
-    firstName: 'Ali',
-    lastName: 'Ashraf',
-    email: 'ali@example.com',
+  // --- Fetch sent and received invites ---
+  useEffect(() => {
+    fetchInvites();
+  }, []);
+
+  const fetchInvites = async () => {
+    try {
+      setLoading(true);
+      const [sent] = await Promise.all([
+        api.get(`/userInvite/sent/${user.userId}`),
+        // api.get(`/userInvite/received/${user.userId}`)
+      ]);
+      setSentInvites(sent);
+
+    } catch (err) {
+      console.error('Error fetching invites:', err);
+      setError('Failed to fetch invites.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Search Users ---
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) return setSearchResults([]);
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchResult(null);
+    setError(null);
     setLoading(true);
-    setTimeout(() => {
-      const mockUsers: User[] = [
-        { userId: 'u2', firstName: 'Sara', lastName: 'Khan', email: 'sara@example.com' },
-        { userId: 'u3', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-        { userId: 'u4', firstName: 'Lina', lastName: 'Chowdhury', email: 'lina@example.com' },
-      ];
-      const filtered = mockUsers.filter(u =>
-        `${u.firstName} ${u.lastName}`.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(filtered);
+    try {
+      const res = await api.get(`/user/email/${searchQuery.toLowerCase()}`);
+      setSearchResult(res);
+    } catch {
+      setError('No user found with that email.');
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
   // --- Send Invite ---
-  const sendInvite = (user: User) => {
-    const newInvite: any = {
-      inviteId: Math.random().toString(),
-      invitedUserId: user.userId,
-      invitedBy: currentUser.userId,
-      status: 'pending',
-      serverId: serverId,
-      createdAt: new Date(),
-    };
-    setInvites(prev => [...prev, newInvite]);
+  const sendInvite = async (targetUser: User) => {
+    try {
+      const payload = {
+        serverId,
+        invitedBy: user.userId,
+        invitedUserId: targetUser.userId
+      };
+      const res = await api.post('/userInvite/send', payload);
+      setSentInvites(prev => [...prev, res]);
+      setSearchResult(null);
+      setSearchQuery('');
+      socket.emit("invite_sent", { sentId: targetUser.userId })
+    } catch (err) {
+      console.error('Error sending invite:', err);
+      setError('Failed to send invite.');
+    }
   };
 
-  // --- Accept / Reject ---
-  const handleInviteAction = (inviteId: string, action: 'accept' | 'reject') => {
-    setInvites(prev =>
-      prev.map(inv =>
-        inv.inviteId === inviteId
-          ? { ...inv, status: action === 'accept' ? 'accepted' : 'rejected' }
-          : inv
-      )
-    );
+
+  // --- Cancel Invite (Sent Only) ---
+  const cancelInvite = async (inviteId: string, targetUser: string) => {
+    try {
+      await api.delete(`/userInvite/cancel/${inviteId}`, { userId: user?.userId });
+      setSentInvites(prev => prev.filter(inv => inv.inviteId !== inviteId));
+      socket.emit("invite_sent", { sentId: targetUser })
+    } catch (err) {
+      console.error('Error canceling invite:', err);
+      setError('Failed to cancel invite.');
+    }
   };
+  console.log(receivedInvites, sentInvites)
 
   return (
     <div className="max-w-4xl mx-auto mb-10">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-primary">User Invites</h2>
           <p className="text-sm text-secondary mt-1">
-            Invite users directly to this server
+            Manage and send server invitations.
           </p>
         </div>
       </div>
@@ -87,89 +134,76 @@ const UserInviteUi: React.FC<UserInviteUiProps> = ({ serverId, userId }) => {
       <div className="relative mb-6">
         <input
           type="text"
-          placeholder="Search users by name or email..."
+          placeholder="Search users by email..."
           value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="w-full bg-card text-primary placeholder:text-secondary border border-border rounded-xl px-4 py-2 outline-none focus:border-accent transition"
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-card text-black placeholder:text-secondary border border-border rounded-xl px-4 py-2 outline-none focus:border-accent transition"
         />
-        <Search className="absolute right-3 top-2.5 text-secondary w-5 h-5" />
+        <Search
+          onClick={handleSearch}
+          className="absolute cursor-pointer right-3 top-2.5 text-secondary w-5 h-5"
+        />
       </div>
 
-      {/* Search Results */}
-      {searchQuery && (
+      {/* Search Result */}
+      {(searchResult || error) && (
         <div className="bg-card border border-border rounded-xl p-3 mb-8">
           {loading ? (
             <p className="text-secondary">Searching...</p>
-          ) : searchResults.length ? (
-            searchResults.map((user) => (
-              <div
-                key={user.userId}
-                className="flex justify-between items-center border-b border-border py-2 last:border-0"
-              >
-                <div>
-                  <p className="font-semibold text-primary">
-                    {user.firstName} {user.lastName}
-                  </p>
-                  <p className="text-sm text-secondary">{user.email}</p>
-                </div>
-                <button
-                  onClick={() => sendInvite(user)}
-                  className="btn-primary flex items-center gap-2 px-3 py-1 rounded-lg text-sm"
-                >
-                  <UserPlus className="w-4 h-4" /> Invite
-                </button>
+          ) : searchResult ? (
+            <div className="flex justify-between items-center py-2">
+              <div>
+                <p className="font-semibold text-primary">
+                  {searchResult.firstName} {searchResult.lastName}
+                </p>
+                <p className="text-sm text-secondary">{searchResult.email}</p>
               </div>
-            ))
+              <button
+                onClick={() => sendInvite(searchResult)}
+                className="btn-primary flex items-center gap-2 px-3 py-1 rounded-lg text-sm"
+              >
+                <UserPlus className="w-4 h-4" /> Invite
+              </button>
+            </div>
           ) : (
-            <p className="text-secondary">No users found.</p>
+            <p className="text-secondary">{error}</p>
           )}
         </div>
       )}
 
-      {/* Invites Section */}
-      <div>
-        <h3 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-          Sent Invites
-        </h3>
+
+
+      {/* Sent Invites */}
+      <section>
+        <h3 className="text-lg font-semibold text-primary mb-3">Sent Invites</h3>
         <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-          {invites.length === 0 ? (
-            <p className="text-secondary">No invites yet.</p>
+          {sentInvites?.length === 0 ? (
+            <p className="text-secondary">No invites sent yet.</p>
           ) : (
-            invites.map((invite) => (
+            sentInvites?.map((invite) => (
               <div
-                key={invite.inviteId}
+                key={invite?.inviteId}
                 className="flex justify-between items-center border-b border-border pb-2 last:border-0"
               >
-                <div>
-                  <p className="font-semibold text-primary">
-                    {invite.invitedUser.firstName} {invite.invitedUser.lastName}{' '}
-                    <span className="text-secondary text-sm">({invite.status})</span>
-                  </p>
-                  <p className="text-sm text-secondary">
-                    Invited by {invite.invitedBy.firstName} {invite.invitedBy.lastName}
-                  </p>
-                </div>
-                {invite.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleInviteAction(invite.inviteId, 'accept')}
-                      className="bg-green-600 hover:bg-green-700 rounded-lg p-1"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleInviteAction(invite.inviteId, 'reject')}
-                      className="bg-red-600 hover:bg-red-700 rounded-lg p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                <p className="font-semibold text-primary">
+                  To: {invite?.invitedUser?.firstName}{' '}
+                  <span className="text-secondary text-sm ml-2">
+                    ({invite?.status})
+                  </span>
+                </p>
+                {invite?.status === 'pending' && (
+                  <button
+                    onClick={() => cancelInvite(invite?.inviteId, invite?.invitedUser?.userId)}
+                    className="bg-gray-700 hover:bg-gray-800 rounded-lg p-1"
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
                 )}
               </div>
             ))
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

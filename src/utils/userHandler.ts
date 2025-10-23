@@ -1,6 +1,7 @@
 import { api, refreshAccessToken } from "@/api/api";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
+import socket from "./socketClient";
 
 interface JwtPayload {
     sub: string;       // user ID
@@ -61,6 +62,7 @@ export async function getUserData(): Promise<any | null> {
 
         // Fetch from API if not in localStorage
         const userData = await api.get(`/user/${payload.userId}`);
+        socket.emit("register_user",payload.userId)
         if (!userData) throw new Error("Failed to fetch user data");
 
         localStorage.setItem("userData", JSON.stringify(userData));

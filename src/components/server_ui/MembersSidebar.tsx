@@ -1,5 +1,6 @@
+import { ServerRole } from "@/app/types/serverTypes";
 import { Crown, Shield } from "lucide-react";
-import { ServerRole } from "./MainServerInterface";
+
 
 function MembersSidebar({ selectedLobby, selectedLobbyName, lobbyMembers, getInitials }:any) {
     const getRoleIcon = (role: ServerRole) => {

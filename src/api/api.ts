@@ -97,7 +97,6 @@ export async function apiCall<T = any>(
 
 
         const newToken = await refreshAccessToken();
-
         if (newToken) {
           requestHeaders['Authorization'] = `Bearer ${newToken}`;
           const retryResponse = await fetch(url, { ...config, headers: requestHeaders });
@@ -159,8 +158,8 @@ export const api = {
   patch: <T = any>(endpoint: string, body?: any, options?: Omit<ApiOptions, 'method' | 'body'>) =>
     apiCall<T>(endpoint, { ...options, method: 'PATCH', body }),
 
-  delete: <T = any>(endpoint: string, options?: Omit<ApiOptions, 'method'>) =>
-    apiCall<T>(endpoint, { ...options, method: 'DELETE' }),
+  delete: <T = any>(endpoint: string,body?:any, options?: Omit<ApiOptions, 'method' | 'body'>) =>
+    apiCall<T>(endpoint, { ...options, method: 'DELETE',body }),
 
   upload: <T = any>(endpoint: string, file: File, options?: Omit<ApiOptions, 'method' | 'body'>) => {
     const formData = new FormData();

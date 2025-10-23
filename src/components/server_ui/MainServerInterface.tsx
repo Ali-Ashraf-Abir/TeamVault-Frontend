@@ -136,7 +136,7 @@ const MainServerInterface: React.FC = () => {
     return `${firstName?.charAt(0)}${lastName?.charAt(0)}`.toUpperCase();
   };
 
-  if (!isInitialized) return <div>Loading</div>; 
+  if (!isInitialized) return <div>Loading</div>;
   return (
     <div className="flex h-screen bg-primary text-primary">
       {/* Modals */}
@@ -209,6 +209,7 @@ const MainServerInterface: React.FC = () => {
         )}
         {activeView === 'invites' && (
           <InvitesView
+            user={user}
             invites={invites}
             onRevoke={revokeInvite}
             serverId={serverId}

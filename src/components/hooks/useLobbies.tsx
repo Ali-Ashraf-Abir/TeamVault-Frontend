@@ -23,9 +23,9 @@ export const useLobbies = (serverId: string, userId: string | undefined) => {
         fetchLobbies();
       }
     };
-
+    setData('loadLobby', false)
     socket.on("reload_user_lobby", handleReload);
-    
+
     return () => {
       socket.off("reload_user_lobby", handleReload);
     };
@@ -49,11 +49,11 @@ export const useLobbies = (serverId: string, userId: string | undefined) => {
     throw new Error(result.message);
   };
 
-  return { 
-    lobbies, 
-    selectedLobby, 
-    setSelectedLobby, 
-    createLobby, 
-    deleteLobby 
+  return {
+    lobbies,
+    selectedLobby,
+    setSelectedLobby,
+    createLobby,
+    deleteLobby
   };
 };

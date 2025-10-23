@@ -11,19 +11,21 @@ interface InvitesViewProps {
   onRevoke: (inviteId: string) => Promise<void>;
   serverId: string;
   userId: string | undefined;
+  user:any;
 }
 
 const InvitesView: React.FC<InvitesViewProps> = ({
   invites,
   onRevoke,
   serverId,
-  userId
+  userId,
+  user
 }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      <UserInviteUi serverId={serverId} userId={userId} />
+      <UserInviteUi serverId={serverId} userId={userId} user={user} />
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
